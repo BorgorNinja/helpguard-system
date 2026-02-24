@@ -204,6 +204,97 @@ switch ($action) {
         echo json_encode(['status'=>'success','logs'=>$logs]);
         break;
 
+    // ─── Save user GPS coordinates ───────────────────────────────────────────
+    case 'save_gps':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+        $lat = isset($_POST['latitude'])  && $_POST['latitude']  !== '' ? (float)$_POST['latitude']  : null;
+        $lng = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? (float)$_POST['longitude'] : null;
+        if ($lat === null || $lng === null || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            echo json_encode(['status'=>'error','message'=>'Invalid coordinates.']); exit;
+        }
+        // Ensure GPS columns exist on users table
+        $db2 = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+        $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db2' AND TABLE_NAME='users'");
+        $existCols2 = [];
+        while($rc2 = $colRes->fetch_row()) $existCols2[] = $rc2[0];
+        if (!in_array('gps_lat', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lat DECIMAL(10,7) DEFAULT NULL");
+        if (!in_array('gps_lng', $existCols2)) $conn->query("ALTER TABLE users ADD COLUMN gps_lng DECIMAL(10,7) DEFAULT NULL");
+
+        $upd = $conn->prepare("UPDATE users SET gps_lat=?, gps_lng=? WHERE id=?");
+        $upd->bind_param("ddi", $lat, $lng, $user_id);
+        if ($upd->execute()) {
+            $_SESSION['gps_lat'] = $lat;
+            $_SESSION['gps_lng'] = $lng;
+            echo json_encode(['status'=>'success','lat'=>$lat,'lng'=>$lng]);
+        } else {
+            echo json_encode(['status'=>'error','message'=>'Failed to save GPS: '.$upd->error]);
+        }
+        $upd->close();
+        break;
+
+    // ─── Profile update ──────────────────────────────────────────────────────
+    case 'update_profile':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+
+        $first_name   = trim($_POST['first_name']   ?? '');
+        $last_name    = trim($_POST['last_name']    ?? '');
+        $email        = trim($_POST['email']        ?? '');
+        $avatar_color = trim($_POST['avatar_color'] ?? '#1c57b2');
+        $current_pw   = $_POST['current_password']  ?? '';
+        $new_pw       = $_POST['new_password']      ?? '';
+
+        if (empty($first_name) || empty($last_name) || empty($email)) {
+            echo json_encode(['status'=>'error','message'=>'First name, last name and email are required.']); exit;
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
+        }
+        // Validate avatar color (hex)
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $avatar_color)) $avatar_color = '#1c57b2';
+
+        // Ensure avatar_color column exists
+        $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+        $chkCols = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
+        $existCols = [];
+        while($rc = $chkCols->fetch_row()) $existCols[] = $rc[0];
+        if (!in_array('avatar_color', $existCols)) {
+            $conn->query("ALTER TABLE users ADD COLUMN avatar_color VARCHAR(7) NOT NULL DEFAULT '#1c57b2'");
+        }
+
+        // Check email uniqueness (exclude current user)
+        $ck = $conn->prepare("SELECT id FROM users WHERE email=? AND id!=? LIMIT 1");
+        $ck->bind_param("si", $email, $user_id); $ck->execute(); $ck->store_result();
+        if ($ck->num_rows > 0) { echo json_encode(['status'=>'error','message'=>'That email is already in use.']); exit; }
+        $ck->close();
+
+        // Password change requested?
+        if (!empty($new_pw)) {
+            if (strlen($new_pw) < 8) { echo json_encode(['status'=>'error','message'=>'New password must be at least 8 characters.']); exit; }
+            // Verify current password
+            $pw_stmt = $conn->prepare("SELECT password FROM users WHERE id=? LIMIT 1");
+            $pw_stmt->bind_param("i", $user_id); $pw_stmt->execute(); $pw_stmt->bind_result($hashed); $pw_stmt->fetch(); $pw_stmt->close();
+            if (!password_verify($current_pw, $hashed)) {
+                echo json_encode(['status'=>'error','message'=>'Current password is incorrect.']); exit;
+            }
+            $new_hash = password_hash($new_pw, PASSWORD_DEFAULT);
+            $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=?, password=? WHERE id=?");
+            $upd->bind_param("sssssi", $first_name, $last_name, $email, $avatar_color, $new_hash, $user_id);
+        } else {
+            $upd = $conn->prepare("UPDATE users SET first_name=?, last_name=?, email=?, avatar_color=? WHERE id=?");
+            $upd->bind_param("ssssi", $first_name, $last_name, $email, $avatar_color, $user_id);
+        }
+
+        if ($upd->execute()) {
+            // Update session
+            $_SESSION['first_name'] = $first_name;
+            $_SESSION['last_name']  = $last_name;
+            echo json_encode(['status'=>'success','message'=>'Profile updated.']);
+        } else {
+            echo json_encode(['status'=>'error','message'=>'Update failed: '.$upd->error]);
+        }
+        $upd->close();
+        break;
+
     default:
         echo json_encode(['status'=>'error','message'=>'Unknown action.']);
 }
