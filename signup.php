@@ -5,21 +5,87 @@ require 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
-    $first=trim($_POST['first_name']??''); $last=trim($_POST['last_name']??'');
-    $email=trim($_POST['email']??''); $pw=$_POST['password']??''; $pw2=$_POST['confirm_password']??'';
-    if(empty($first)||empty($last)||empty($email)||empty($pw)){echo json_encode(['status'=>'error','message'=>'All fields are required.']);exit;}
-    if(!filter_var($email,FILTER_VALIDATE_EMAIL)){echo json_encode(['status'=>'error','message'=>'Invalid email address.']);exit;}
-    if(strlen($pw)<8){echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']);exit;}
-    if($pw!==$pw2){echo json_encode(['status'=>'error','message'=>'Passwords do not match.']);exit;}
-    $chk=$conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");$chk->bind_param("s",$email);$chk->execute();$chk->store_result();
-    if($chk->num_rows>0){echo json_encode(['status'=>'error','message'=>'Email is already registered.']);exit;}
+
+    // ── Auto-migrate: add email verification columns if they don't exist yet ──
+    // This means email_verification.sql doesn't need to be run manually.
+    $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+    $existingCols = [];
+    $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
+    while ($r = $colRes->fetch_row()) $existingCols[] = $r[0];
+
+    if (!in_array('email_verified', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
+    if (!in_array('verification_token', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN verification_token VARCHAR(64) DEFAULT NULL AFTER email_verified");
+    if (!in_array('token_expires_at', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN token_expires_at DATETIME DEFAULT NULL AFTER verification_token");
+    if (!in_array('reset_token', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER token_expires_at");
+    if (!in_array('reset_token_expires', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN reset_token_expires DATETIME DEFAULT NULL AFTER reset_token");
+
+    // Mark any existing users (registered before this migration) as already verified
+    if (!in_array('email_verified', $existingCols))
+        $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
+    // ─────────────────────────────────────────────────────────────────────────
+
+    $first = trim($_POST['first_name']      ?? '');
+    $last  = trim($_POST['last_name']       ?? '');
+    $email = trim($_POST['email']           ?? '');
+    $pw    = $_POST['password']             ?? '';
+    $pw2   = $_POST['confirm_password']     ?? '';
+
+    if (empty($first)||empty($last)||empty($email)||empty($pw)) {
+        echo json_encode(['status'=>'error','message'=>'All fields are required.']); exit;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['status'=>'error','message'=>'Invalid email address.']); exit;
+    }
+    if (strlen($pw) < 8) {
+        echo json_encode(['status'=>'error','message'=>'Password must be at least 8 characters.']); exit;
+    }
+    if ($pw !== $pw2) {
+        echo json_encode(['status'=>'error','message'=>'Passwords do not match.']); exit;
+    }
+
+    $chk = $conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
+    if (!$chk) { echo json_encode(['status'=>'error','message'=>'Database error. Please try again.']); exit; }
+    $chk->bind_param("s", $email); $chk->execute(); $chk->store_result();
+    if ($chk->num_rows > 0) {
+        echo json_encode(['status'=>'error','message'=>'Email is already registered.']); exit;
+    }
     $chk->close();
-    $hash=password_hash($pw,PASSWORD_BCRYPT,['cost'=>12]);
-    $ins=$conn->prepare("INSERT INTO users (first_name,last_name,email,password) VALUES (?,?,?,?)");
-    $ins->bind_param("ssss",$first,$last,$email,$hash);
-    if($ins->execute()){echo json_encode(['status'=>'success','message'=>'Account created! Redirecting...','redirect'=>'login.php']);}
-    else{echo json_encode(['status'=>'error','message'=>'Registration failed.']);}
-    $ins->close(); exit;
+
+    $token      = bin2hex(random_bytes(32));
+    $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
+    $hash       = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    $ins = $conn->prepare(
+        "INSERT INTO users (first_name,last_name,email,password,email_verified,verification_token,token_expires_at)
+         VALUES (?,?,?,?,0,?,?)"
+    );
+    if (!$ins) { echo json_encode(['status'=>'error','message'=>'Database error: '.$conn->error]); exit; }
+    $ins->bind_param("ssssss", $first, $last, $email, $hash, $token, $expires_at);
+    if (!$ins->execute()) {
+        echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
+    }
+    $ins->close();
+
+    $emailSent = false;
+    try {
+        require_once __DIR__ . '/HelpGuardMailer.php';
+        $emailSent = sendVerificationEmail($email, $first, $token);
+    } catch (Throwable $e) {
+        error_log('HelpGuard email error: ' . $e->getMessage());
+    }
+
+    $message = $emailSent
+        ? 'Account created! Please check your inbox and verify your email before signing in.'
+        : 'Account created! We had trouble sending the verification email — use the "Resend" option on the login page.';
+
+    echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?verify_sent=1']);
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -89,6 +155,10 @@ body{background:#0a0f1e;min-height:100vh;display:flex;overflow:hidden;}
 .pw-strength{height:4px;border-radius:4px;margin-top:6px;background:#eee;overflow:hidden;}
 .pw-strength-bar{height:100%;border-radius:4px;transition:all 0.3s;}
 
+/* Email notice badge */
+.email-notice{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;font-size:0.83rem;color:#795548;line-height:1.5;}
+.email-notice i{color:#f59e0b;margin-top:2px;flex-shrink:0;}
+
 @media(max-width:900px){
   body{flex-direction:column;overflow:auto;}
   .bg-canvas{display:none;}
@@ -120,7 +190,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;overflow:hidden;}
   <p>Sign up in seconds and start contributing to a safer community for everyone around you.</p>
   <div class="steps">
     <div class="step"><div class="step-num">1</div><span class="step-text">Create your free account</span></div>
-    <div class="step"><div class="step-num">2</div><span class="step-text">Post your first safety report</span></div>
+    <div class="step"><div class="step-num">2</div><span class="step-text">Verify your email address</span></div>
     <div class="step"><div class="step-num">3</div><span class="step-text">Help protect your neighborhood</span></div>
   </div>
 </div>
@@ -129,6 +199,11 @@ body{background:#0a0f1e;min-height:100vh;display:flex;overflow:hidden;}
   <a href="index.php" class="back"><i class="fas fa-arrow-left"></i> Back to Home</a>
   <div class="section-title">Create Account</div>
   <p class="section-sub">Join HelpGuard and make your community safer</p>
+
+  <div class="email-notice">
+    <i class="fas fa-envelope-circle-check"></i>
+    <span>A verification link will be sent to your email. You must verify it before signing in.</span>
+  </div>
 
   <div id="msg" class="msg"></div>
   <form id="signupForm" novalidate>
@@ -193,7 +268,7 @@ document.getElementById('signupForm').addEventListener('submit',async function(e
     const data=await res.json();
     if(data.status==='success'){
       msgEl.className='msg success';msgEl.textContent=data.message;msgEl.style.display='block';
-      setTimeout(()=>{window.location.href=data.redirect;},1200);
+      setTimeout(()=>{window.location.href=data.redirect;},2200);
     }else{
       msgEl.className='msg error';msgEl.textContent=data.message;msgEl.style.display='block';
       btn.disabled=false;btn.innerHTML=orig;

@@ -198,7 +198,7 @@ body.dark .dm-slider::before{transform:translateX(18px);}
 .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-width:0;transition:margin-left 0.3s;}
 .topbar{background:var(--topbar-bg);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--topbar-shadow);position:sticky;top:0;z-index:50;animation:fadeIn 0.4s ease;transition:background 0.3s,box-shadow 0.3s;}
 .topbar-left{display:flex;align-items:center;gap:12px;}
-.ham-btn{background:none;border:none;font-size:1.2rem;color:var(--muted);cursor:pointer;padding:7px;border-radius:9px;transition:all 0.2s;display:none;}
+.ham-btn{background:none;border:none;font-size:1.2rem;color:var(--muted);cursor:pointer;padding:7px;border-radius:9px;transition:all 0.2s;display:none;} /* shown via JS on desktop when sidebar is closed */
 .ham-btn:hover{background:var(--bg);color:var(--text);}
 .topbar h1{font-size:1.1rem;font-weight:700;color:var(--text);}
 .right-top{display:flex;align-items:center;gap:10px;}
@@ -318,7 +318,7 @@ body.dark .legend-item{color:#8b949e;}
 .rm-popup-radius{font-size:0.72rem;color:#999;margin-top:6px;display:flex;align-items:center;gap:4px;}
 
 /* ─── MODAL (Post Report) ─── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(3px);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(3px);}
 .modal-overlay.open{display:flex;animation:fadeIn 0.25s ease;}
 .modal{background:var(--modal-bg);border-radius:20px;padding:32px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;position:relative;animation:scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1);transition:background 0.3s;}
 .modal h2{font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:4px;}
@@ -364,7 +364,7 @@ body.dark .legend-item{color:#8b949e;}
 .radius-val{font-size:0.82rem;font-weight:700;color:var(--blue);min-width:60px;text-align:right;}
 
 /* ─── MINI MAP MODAL ─── */
-.mini-map-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(3px);}
+.mini-map-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1100;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(3px);}
 .mini-map-modal.open{display:flex;animation:fadeIn 0.2s ease;}
 .mini-map-box{background:var(--modal-bg);border-radius:18px;width:100%;max-width:640px;overflow:hidden;position:relative;animation:scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1);}
 .mini-map-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--card-border);}
@@ -770,8 +770,61 @@ function toggleDarkMode() {
 // ════════════════════════════════════════════════════════
 // SIDEBAR
 // ════════════════════════════════════════════════════════
-function openSidebar(){ document.getElementById('sidebar').classList.add('mobile-open'); document.getElementById('overlay').classList.add('show'); }
-function closeSidebar(){ document.getElementById('sidebar').classList.remove('mobile-open'); document.getElementById('overlay').classList.remove('show'); }
+function isMobile(){ return window.innerWidth <= 900; }
+
+// Clean up sidebar state on window resize to avoid stuck states
+window.addEventListener('resize', ()=>{
+  const sb   = document.getElementById('sidebar');
+  const ov   = document.getElementById('overlay');
+  const main = document.querySelector('.main');
+  const ham  = document.querySelector('.ham-btn');
+  if(!isMobile()){
+    // Switching to desktop: clear mobile classes, restore margin unless closed
+    sb.classList.remove('mobile-open');
+    ov.classList.remove('show');
+    if(!sb.classList.contains('closed')){
+      main.style.marginLeft = 'var(--sidebar-w)';
+      if(ham) ham.style.display = 'none';
+    }
+  } else {
+    // Switching to mobile: clear desktop closed state, reset margin
+    sb.classList.remove('closed');
+    main.style.marginLeft = '';
+    if(ham) ham.style.display = '';
+  }
+});
+
+function openSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('overlay');
+  const main = document.querySelector('.main');
+  if(isMobile()){
+    sb.classList.add('mobile-open');
+    ov.classList.add('show');
+  } else {
+    sb.classList.remove('closed');
+    main.style.marginLeft = 'var(--sidebar-w)';
+    // Hide the topbar hamburger on desktop once sidebar is open
+    const ham = document.querySelector('.ham-btn');
+    if(ham) ham.style.display = 'none';
+  }
+}
+
+function closeSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('overlay');
+  const main = document.querySelector('.main');
+  if(isMobile()){
+    sb.classList.remove('mobile-open');
+    ov.classList.remove('show');
+  } else {
+    sb.classList.add('closed');
+    main.style.marginLeft = '0';
+    // Show the topbar hamburger on desktop so user can reopen
+    const ham = document.querySelector('.ham-btn');
+    if(ham) ham.style.display = 'flex';
+  }
+}
 
 // ════════════════════════════════════════════════════════
 // SECTION ROUTING
@@ -1203,11 +1256,25 @@ document.getElementById('reportForm').addEventListener('submit',async function(e
 let pickerMap=null, pickerMarker=null, pickerCircle=null, pickerRadius=200;
 
 function initPickerMap(){
-  if(pickerMap){ setTimeout(()=>pickerMap.invalidateSize(),60); return; }
-  pickerMap=L.map('pickerMap').setView([14.5995,120.9842],11);
+  if(pickerMap){
+    setTimeout(()=>pickerMap.invalidateSize(),60);
+    return;
+  }
+  // Center on saved GPS if available, otherwise default to Manila
+  const initLat = SAVED_GPS_LAT !== null ? SAVED_GPS_LAT : 14.5995;
+  const initLng = SAVED_GPS_LNG !== null ? SAVED_GPS_LNG : 120.9842;
+  const initZoom = SAVED_GPS_LAT !== null ? 15 : 11;
+
+  pickerMap=L.map('pickerMap').setView([initLat, initLng], initZoom);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(pickerMap);
   pickerMap.on('click',e=>placePin(e.latlng.lat,e.latlng.lng,true));
-  setTimeout(()=>pickerMap.invalidateSize(),100);
+  setTimeout(()=>{
+    pickerMap.invalidateSize();
+    // Auto-pin saved GPS when modal opens so it's ready to submit immediately
+    if(SAVED_GPS_LAT !== null && SAVED_GPS_LNG !== null){
+      placePin(SAVED_GPS_LAT, SAVED_GPS_LNG, true);
+    }
+  },150);
 }
 
 function placePin(lat,lng,doRG){
@@ -1254,12 +1321,32 @@ async function reverseGeocode(lat,lng){
 }
 
 function useMyLocation(){
-  if(!navigator.geolocation){alert('Geolocation not supported.');return;}
   const btn=document.getElementById('locateBtn');
+  const resetBtn=()=>{ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location'; btn.disabled=false; };
+
+  // If user already has saved GPS in their profile, use it instantly.
+  // No browser permission prompt, no risk of hanging.
+  if(SAVED_GPS_LAT !== null && SAVED_GPS_LNG !== null){
+    placePin(SAVED_GPS_LAT, SAVED_GPS_LNG, true);
+    return;
+  }
+
+  // No saved GPS — fall back to live browser geolocation
+  if(!navigator.geolocation){
+    alert('Geolocation is not supported by your browser. Please save your GPS in your Profile first, or pin a location manually on the map.');
+    return;
+  }
   btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Locating…'; btn.disabled=true;
   navigator.geolocation.getCurrentPosition(
-    pos=>{ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location'; btn.disabled=false; placePin(pos.coords.latitude,pos.coords.longitude,true); },
-    ()=>{ btn.innerHTML='<i class="fas fa-location-crosshairs"></i> Use My Location'; btn.disabled=false; alert('Could not get your location.'); }
+    pos=>{ resetBtn(); placePin(pos.coords.latitude, pos.coords.longitude, true); },
+    err=>{
+      resetBtn();
+      let msg='Could not get your location.';
+      if(err.code===1) msg='Location access was denied. Please allow location access in your browser, or save your GPS in your Profile first.';
+      if(err.code===3) msg='Location request timed out. Try saving your GPS in your Profile instead.';
+      alert(msg);
+    },
+    { enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
   );
 }
 

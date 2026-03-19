@@ -4,7 +4,7 @@
 
 $servername = "localhost";
 $db_user    = "root";       // change if needed
-$db_pass    = "root";           // change if you set one
+$db_pass    = "";           // change if you set one
 $dbname     = "helpguard";
 
 $conn = new mysqli($servername, $db_user, $db_pass, $dbname);

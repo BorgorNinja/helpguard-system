@@ -11,7 +11,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ip       = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
     $device   = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
-    if (empty($email) || empty($password)) {
+    // ── Auto-migrate verification columns if not present ─────────────────────
+    $db = $conn->query("SELECT DATABASE()")->fetch_row()[0];
+    $existingCols = [];
+    $colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users'");
+    while ($r = $colRes->fetch_row()) $existingCols[] = $r[0];
+    if (!in_array('email_verified', $existingCols)) {
+        $conn->query("ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
+        $conn->query("ALTER TABLE users ADD COLUMN verification_token VARCHAR(64) DEFAULT NULL AFTER email_verified");
+        $conn->query("ALTER TABLE users ADD COLUMN token_expires_at DATETIME DEFAULT NULL AFTER verification_token");
+        $conn->query("ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL AFTER token_expires_at");
+        $conn->query("ALTER TABLE users ADD COLUMN reset_token_expires DATETIME DEFAULT NULL AFTER reset_token");
+        // Mark existing users as verified so they aren't locked out
+        $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    if (empty($email)) {
+        echo json_encode(['status' => 'error', 'message' => 'All fields are required.']); exit;
+    }
+    if ($mode !== 'resend_verification' && empty($password)) {
         echo json_encode(['status' => 'error', 'message' => 'All fields are required.']); exit;
     }
 
@@ -30,15 +50,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $log_status  = 'Failed';
     $log_user_id = null;
 
-    $stmt = $conn->prepare("SELECT id, first_name, last_name, password, role FROM users WHERE email = ? LIMIT 1");
+    // ── Resend verification mode ─────────────────────────────────────────────
+    if ($mode === 'resend_verification') {
+        $stmt = $conn->prepare(
+            "SELECT id, first_name, email_verified FROM users WHERE email = ? LIMIT 1"
+        );
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $res  = $stmt->get_result();
+        $user = $res->fetch_assoc();
+        $stmt->close();
+        if ($user && !$user['email_verified']) {
+            $newToken  = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+            $upd = $conn->prepare(
+                "UPDATE users SET verification_token=?, token_expires_at=? WHERE id=?"
+            );
+            $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
+            $upd->execute(); $upd->close();
+            try {
+                require_once __DIR__ . '/HelpGuardMailer.php';
+                sendVerificationEmail($email, $user['first_name'], $newToken);
+            } catch (Throwable $e) { error_log('HelpGuard resend: ' . $e->getMessage()); }
+        }
+        // Always generic response — don't reveal if email exists
+        echo json_encode(['status'=>'success','message'=>'If that account exists and is unverified, a new link has been sent. Please check your inbox.']);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT id, first_name, last_name, password, role, email_verified FROM users WHERE email = ? LIMIT 1");
+    if (!$stmt) { echo json_encode(['status'=>'error','message'=>'Database error. Please try again.']); exit; }
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        $stmt->bind_result($id, $first_name, $last_name, $hashed, $role);
+        $stmt->bind_result($id, $first_name, $last_name, $hashed, $role, $email_verified);
         $stmt->fetch();
         if (password_verify($password, $hashed)) {
+            // ── Email verification gate ──────────────────────────────────────
+            if (!$email_verified) {
+                echo json_encode([
+                    'status'      => 'error',
+                    'message'     => 'Please verify your email address before signing in. Check your inbox or resend below.',
+                    'unverified'  => true,
+                    'email'       => $email,
+                ]);
+                // Still log the attempt
+                $log = $conn->prepare("INSERT INTO login_logs (user_id, email, ip_address, device, status) VALUES (?, ?, ?, ?, ?)");
+                $log_s = 'Failed';
+                $log->bind_param("issss", $id, $email, $ip, $device, $log_s);
+                $log->execute(); $log->close();
+                exit;
+            }
             session_regenerate_id(true);
             $_SESSION['user_id']    = $id;
             $_SESSION['first_name'] = htmlspecialchars($first_name, ENT_QUOTES, 'UTF-8');
@@ -154,6 +218,17 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 .msg.success{background:#e8f5e9;color:#2e7d32;}
 .msg.error{background:#ffebee;color:#c62828;}
 
+.notice-banner{padding:12px 16px;border-radius:10px;font-size:0.84rem;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;font-weight:500;line-height:1.5;}
+.notice-banner.info{background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb;}
+.notice-banner.success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;}
+.notice-banner i{margin-top:1px;flex-shrink:0;}
+.resend-block{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 16px;margin-top:12px;display:none;}
+.resend-block p{font-size:0.82rem;color:#795548;margin-bottom:10px;line-height:1.5;}
+.resend-block input{width:100%;padding:9px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.88rem;outline:none;font-family:'Poppins',sans-serif;margin-bottom:8px;}
+.resend-block input:focus{border-color:var(--blue-light);}
+.btn-resend{width:100%;background:var(--blue);color:#fff;border:none;padding:9px;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+.btn-resend:disabled{opacity:0.6;cursor:not-allowed;}
+
 @media(max-width:900px){
   body{flex-direction:column;overflow:auto;background:#0a0f1e;}
   .bg-canvas{display:none;}
@@ -204,6 +279,12 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 <div class="right">
   <a href="index.php" class="back"><i class="fas fa-arrow-left"></i> Back to Home</a>
 
+  <?php if (isset($_GET['verify_sent'])): ?>
+  <div class="notice-banner info"><i class="fas fa-envelope"></i><span>A verification link has been sent to your email address. Please check your inbox (and spam folder) before signing in.</span></div>
+  <?php elseif (isset($_GET['reset'])): ?>
+  <div class="notice-banner success"><i class="fas fa-circle-check"></i><span>Password reset successfully! You can now sign in with your new password.</span></div>
+  <?php endif; ?>
+
   <div class="login-tabs">
     <button class="tab-btn active-user" id="tabUser" onclick="switchTab('user')">
       <i class="fas fa-user"></i> Member Login
@@ -229,8 +310,13 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
         <input type="password" id="password" name="password" placeholder="Your password" required>
         <span class="show-btn" onclick="togglePw('password',this)">SHOW</span>
       </div>
-      <div class="forgot"><a href="#">Forgot Password?</a></div>
+      <div class="forgot"><a href="forgot_password.php">Forgot Password?</a></div>
       <button class="btn-primary" type="submit" id="loginBtn"><i class="fas fa-right-to-bracket"></i> Sign In</button>
+      <div id="resendBlock" class="resend-block">
+        <p><i class="fas fa-envelope-circle-check" style="color:#f59e0b;margin-right:5px;"></i>Your email isn't verified yet. Enter your email and we'll resend the link.</p>
+        <input type="email" id="resendEmailInput" placeholder="you@example.com">
+        <button class="btn-resend" id="resendBtn" onclick="resendVerification()"><i class="fas fa-paper-plane"></i> Resend Verification Email</button>
+      </div>
       <div class="signup-link">Don't have an account? <a href="signup.php">Create one</a></div>
     </form>
   </div>
@@ -309,9 +395,39 @@ async function handleLogin(formId,btnId,msgId){
     }else{
       show(msgEl,'error',data.message);
       btn.disabled=false;btn.innerHTML=orig;
+      // Show resend block if account is unverified
+      if(data.unverified){
+        const rb=document.getElementById('resendBlock');
+        const ri=document.getElementById('resendEmailInput');
+        if(rb){rb.style.display='block';}
+        if(ri&&data.email){ri.value=data.email;}
+      }
     }
   }catch{
     show(msgEl,'error','Something went wrong. Please try again.');
+    btn.disabled=false;btn.innerHTML=orig;
+  }
+}
+
+async function resendVerification(){
+  const email=document.getElementById('resendEmailInput')?.value?.trim();
+  const btn=document.getElementById('resendBtn');
+  const msgEl=document.getElementById('userMsg');
+  if(!email){show(msgEl,'error','Please enter your email address.');return;}
+  const orig=btn.innerHTML;
+  btn.disabled=true;
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending...';
+  try{
+    const fd=new FormData();
+    fd.append('mode','resend_verification');
+    fd.append('email',email);
+    fd.append('password','__resend__'); // required field guard, ignored server-side for this mode
+    const res=await fetch('login.php',{method:'POST',body:fd});
+    const data=await res.json();
+    show(msgEl,'success',data.message);
+    btn.innerHTML='<i class="fas fa-check"></i> Sent!';
+  }catch{
+    show(msgEl,'error','Something went wrong.');
     btn.disabled=false;btn.innerHTML=orig;
   }
 }
