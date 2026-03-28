@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $emailSent = false;
     try {
-        require_once __DIR__ . '/HelpGuardMailer.php';
+        require_once __DIR__ . '/core/HelpGuardMailer.php';
         $emailSent = sendVerificationEmail($email, $first, $token);
     } catch (Throwable $e) {
         error_log('HelpGuard email error: ' . $e->getMessage());

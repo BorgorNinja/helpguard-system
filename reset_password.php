@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 $token     = trim($_GET['token'] ?? '');
 $tokenOk   = false;

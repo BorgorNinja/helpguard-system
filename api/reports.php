@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     echo json_encode(['status'=>'error','message'=>'Unauthorized. Please log in.']); exit;
 }
 
-require 'db_connect.php';
+require __DIR__ . '/../config/db.php';
 
 $user_id = (int)($_SESSION['user_id'] ?? 0);
 $role    = $_SESSION['role'] ?? 'user';
@@ -107,11 +107,71 @@ switch ($action) {
             $user_id,$title,$description,$location_name,$barangay,$city,$province,
             $lat,$lng,$rad,$status_val,$category);
         if ($ins->execute()) {
-            echo json_encode(['status'=>'success','message'=>'Report posted.','id'=>(int)$conn->insert_id]);
+            $new_id = (int)$conn->insert_id;
+            $ins->close();
+
+            // ── Photo upload (optional, up to 3 images) ────────────────────
+            $uploaded_images = [];
+            if (!empty($_FILES['photos']['name'][0])) {
+                $upload_dir = __DIR__ . '/../uploads/reports/';
+                if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
+
+                // Ensure report_images table exists
+                $conn->query("
+                    CREATE TABLE IF NOT EXISTS `report_images` (
+                      `id`            int(11)      NOT NULL AUTO_INCREMENT,
+                      `report_id`     int(11)      NOT NULL,
+                      `file_name`     varchar(255) NOT NULL,
+                      `original_name` varchar(255) DEFAULT NULL,
+                      `mime_type`     varchar(100) DEFAULT NULL,
+                      `file_size`     int(11)      DEFAULT NULL,
+                      `uploaded_at`   timestamp    NOT NULL DEFAULT current_timestamp(),
+                      PRIMARY KEY (`id`),
+                      KEY `report_id` (`report_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                ");
+
+                $allowed_mime = ['image/jpeg','image/png','image/webp','image/gif'];
+                $max_size     = 5 * 1024 * 1024; // 5 MB per image
+                $max_images   = 3;
+                $count        = min(count($_FILES['photos']['name']), $max_images);
+
+                for ($i = 0; $i < $count; $i++) {
+                    $tmp  = $_FILES['photos']['tmp_name'][$i];
+                    $orig = basename($_FILES['photos']['name'][$i]);
+                    $mime = mime_content_type($tmp);
+                    $size = $_FILES['photos']['size'][$i];
+
+                    if ($_FILES['photos']['error'][$i] !== UPLOAD_ERR_OK) continue;
+                    if (!in_array($mime, $allowed_mime))                  continue;
+                    if ($size > $max_size)                                 continue;
+
+                    $ext      = pathinfo($orig, PATHINFO_EXTENSION) ?: 'jpg';
+                    $filename = 'report_' . $new_id . '_' . uniqid() . '.' . strtolower($ext);
+                    $dest     = $upload_dir . $filename;
+
+                    if (move_uploaded_file($tmp, $dest)) {
+                        $si = $conn->prepare("INSERT INTO report_images (report_id, file_name, original_name, mime_type, file_size) VALUES (?,?,?,?,?)");
+                        $si->bind_param('isssi', $new_id, $filename, $orig, $mime, $size);
+                        $si->execute();
+                        $si->close();
+                        $uploaded_images[] = $filename;
+                    }
+                }
+            } else {
+                $ins->close();
+            }
+
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Report posted.',
+                'id'      => $new_id,
+                'images'  => $uploaded_images,
+            ]);
         } else {
             echo json_encode(['status'=>'error','message'=>'Save failed: '.$ins->error]);
+            $ins->close();
         }
-        $ins->close();
         break;
 
     case 'vote':
@@ -293,6 +353,24 @@ switch ($action) {
             echo json_encode(['status'=>'error','message'=>'Update failed: '.$upd->error]);
         }
         $upd->close();
+        break;
+
+    // ── Get images for a report ──────────────────────────────────────────
+    case 'get_report_images':
+        $report_id = (int)($_GET['report_id'] ?? 0);
+        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
+        $res = $conn->query("SELECT id, file_name, original_name, mime_type, file_size, uploaded_at
+                             FROM report_images WHERE report_id=$report_id ORDER BY uploaded_at ASC");
+        $images = [];
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $row['id']        = (int)$row['id'];
+                $row['file_size'] = (int)$row['file_size'];
+                $row['url']       = 'uploads/reports/' . rawurlencode($row['file_name']);
+                $images[]         = $row;
+            }
+        }
+        echo json_encode(['status'=>'success','images'=>$images]);
         break;
 
     default:

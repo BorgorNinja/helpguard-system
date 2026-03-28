@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 $user_id    = (int)$_SESSION['user_id'];
 $first_name = $_SESSION['first_name'];
@@ -363,6 +363,14 @@ body.dark .legend-item{color:#8b949e;}
 .radius-row input[type=range]{flex:1;accent-color:var(--blue);height:4px;}
 .radius-val{font-size:0.82rem;font-weight:700;color:var(--blue);min-width:60px;text-align:right;}
 
+/* ─── PHOTO UPLOAD ─── */
+.photo-upload-area{border:2px dashed var(--input-border);border-radius:10px;padding:18px 14px;text-align:center;cursor:pointer;color:var(--muted);font-size:0.84rem;transition:border-color 0.2s,background 0.2s;line-height:1.7;}
+.photo-upload-area:hover{border-color:var(--blue-light);background:rgba(58,141,255,0.04);}
+body.dark .photo-upload-area{background:var(--input-bg);}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1.5px solid var(--input-border);flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .remove-photo{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
 /* ─── MINI MAP MODAL ─── */
 .mini-map-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1100;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(3px);}
 .mini-map-modal.open{display:flex;animation:fadeIn 0.2s ease;}
@@ -647,6 +655,16 @@ body.dark .get-gps-btn:hover{background:#14532d;}
         <input type="hidden" id="r_radius_m" value="200">
       </div>
       <div class="form-group"><label>Description *</label><textarea id="r_description" placeholder="Describe what you observed in detail..." rows="4" maxlength="2000" required></textarea></div>
+      <div class="form-group">
+        <label><i class="fas fa-camera" style="color:var(--blue-light);margin-right:5px;"></i>Attach Photos <span style="font-weight:400;color:var(--muted);font-size:0.8rem;">(optional &middot; up to 3 &middot; max 5 MB each)</span></label>
+        <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('r_photos').click()">
+          <i class="fas fa-cloud-arrow-up" style="font-size:1.6rem;color:var(--blue-light);margin-bottom:6px;display:block;"></i>
+          <span>Click to choose photos or drag &amp; drop</span><br>
+          <span style="font-size:0.75rem;color:var(--muted);">JPG, PNG, WEBP &mdash; max 5 MB each</span>
+        </div>
+        <input type="file" id="r_photos" name="photos[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none;" onchange="onPhotosChosen(this)">
+        <div id="photoPreviewRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
         <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-paper-plane"></i> Submit Report</button>
@@ -857,7 +875,7 @@ function activateSection(s) {
 // ════════════════════════════════════════════════════════
 async function fetchReports() {
   try {
-    const res  = await fetch('api.php?action=get_reports');
+    const res  = await fetch('api/reports.php?action=get_reports');
     const data = await res.json();
     if(data.status === 'success') {
       allReports = data.reports;
@@ -948,7 +966,7 @@ async function vote(id, voteType) {
   const fd = new FormData();
   fd.append('action','vote'); fd.append('report_id',id); fd.append('vote',voteType);
   try {
-    const res  = await fetch('api.php',{method:'POST',body:fd});
+    const res  = await fetch('api/reports.php',{method:'POST',body:fd});
     const data = await res.json();
     if(data.status==='success'){
       const rep = allReports.find(r=>r.id==id);
@@ -963,7 +981,7 @@ async function deleteReport(id) {
   const fd = new FormData();
   fd.append('action','delete_report'); fd.append('report_id',id);
   try {
-    const res  = await fetch('api.php',{method:'POST',body:fd});
+    const res  = await fetch('api/reports.php',{method:'POST',body:fd});
     const data = await res.json();
     if(data.status==='success'){ allReports=allReports.filter(r=>r.id!=id); renderFeed(); }
   } catch {}
@@ -1223,6 +1241,36 @@ function closeModal(){
   clearStatusSelection();
   document.getElementById('modalMsg').style.display='none';
   clearPin();
+  // Reset photo previews
+  document.getElementById('photoPreviewRow').innerHTML='';
+  const ph=document.getElementById('r_photos'); if(ph) ph.value='';
+}
+
+// ─── PHOTO UPLOAD HELPERS ────────────────────────────────────────────────
+function onPhotosChosen(input){
+  const row=document.getElementById('photoPreviewRow');
+  row.innerHTML='';
+  const files=Array.from(input.files).slice(0,3);
+  files.forEach((file,idx)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const wrap=document.createElement('div'); wrap.className='photo-thumb';
+      const img=document.createElement('img'); img.src=e.target.result; img.alt='preview';
+      const btn=document.createElement('button'); btn.className='remove-photo';
+      btn.innerHTML='<i class="fas fa-xmark"></i>';
+      btn.onclick=ev=>{ ev.stopPropagation(); removePhoto(idx); };
+      wrap.appendChild(img); wrap.appendChild(btn); row.appendChild(wrap);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(idx){
+  const input=document.getElementById('r_photos');
+  const dt=new DataTransfer();
+  Array.from(input.files).forEach((f,i)=>{ if(i!==idx) dt.items.add(f); });
+  input.files=dt.files;
+  onPhotosChosen(input);
 }
 function outsideClose(e){ if(e.target===document.getElementById('modalOverlay')) closeModal(); }
 function selectStatus(s){ clearStatusSelection(); document.getElementById('opt_'+s).classList.add('selected'); document.getElementById('r_status').value=s; }
@@ -1242,10 +1290,23 @@ document.getElementById('reportForm').addEventListener('submit',async function(e
   fd.append('city',city); fd.append('province',document.getElementById('r_province').value.trim());
   fd.append('description',desc); fd.append('latitude',document.getElementById('r_latitude').value);
   fd.append('longitude',document.getElementById('r_longitude').value); fd.append('radius_m',document.getElementById('r_radius_m').value);
+  // Attach selected photos
+  const photoInput = document.getElementById('r_photos');
+  if(photoInput && photoInput.files.length > 0){
+    const maxPhotos = Math.min(photoInput.files.length, 3);
+    for(let pi=0; pi<maxPhotos; pi++) fd.append('photos[]', photoInput.files[pi]);
+  }
   try{
-    const res=await fetch('api.php',{method:'POST',body:fd}); const data=await res.json();
-    if(data.status==='success'){ showMsg(msgEl,'success','Report posted!'); setTimeout(()=>{ closeModal(); fetchReports(); },1000); }
-    else showMsg(msgEl,'error',data.message||'Failed to submit.');
+    const res=await fetch('api/reports.php',{method:'POST',body:fd}); const data=await res.json();
+    if(data.status==='success'){
+      showMsg(msgEl,'success','Report posted!');
+      // Auto-notify emergency contacts if report is Dangerous
+      if(status==='dangerous' && data.id){
+        const nfd=new FormData(); nfd.append('action','notify_report'); nfd.append('report_id',data.id);
+        fetch('api/contacts.php',{method:'POST',body:nfd}).catch(()=>{});
+      }
+      setTimeout(()=>{ closeModal(); fetchReports(); },1000);
+    } else showMsg(msgEl,'error',data.message||'Failed to submit.');
   }catch{ showMsg(msgEl,'error','Network error. Please try again.'); }
   btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit Report';
 });
@@ -1309,7 +1370,7 @@ function onRadiusChange(val){
 
 async function reverseGeocode(lat,lng){
   try{
-    const res=await fetch(`geocode_proxy.php?lat=${lat}&lon=${lng}`); const data=await res.json();
+    const res=await fetch(`api/geocode_proxy.php?lat=${lat}&lon=${lng}`); const data=await res.json();
     if(data&&data.address){
       const a=data.address;
       if(!document.getElementById('r_location').value) document.getElementById('r_location').value=a.road||a.hamlet||a.suburb||'';
@@ -1366,7 +1427,7 @@ async function getGPSData() {
     const fd = new FormData();
     fd.append('action','save_gps'); fd.append('latitude',lat); fd.append('longitude',lng);
     try {
-      const res  = await fetch('api.php',{method:'POST',body:fd});
+      const res  = await fetch('api/reports.php',{method:'POST',body:fd});
       const data = await res.json();
       if(data.status==='success') {
         // Update display
@@ -1439,7 +1500,7 @@ async function saveProfile(){
   fd.append('email',email); fd.append('avatar_color',selectedColor);
   if(newPw){ fd.append('current_password',currentPw); fd.append('new_password',newPw); }
   try{
-    const res=await fetch('api.php',{method:'POST',body:fd}); const data=await res.json();
+    const res=await fetch('api/reports.php',{method:'POST',body:fd}); const data=await res.json();
     if(data.status==='success'){
       showMsg(msg,'success','Profile updated successfully!');
       const init=(firstName.charAt(0)+lastName.charAt(0)).toUpperCase();

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 $token  = trim($_GET['token'] ?? '');
 $status = 'invalid';
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resen
     $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
     $upd->execute(); $upd->close();
     try {
-        require_once __DIR__ . '/HelpGuardMailer.php';
+        require_once __DIR__ . '/core/HelpGuardMailer.php';
         sendVerificationEmail($resendEmail, $user['first_name'], $newToken);
     } catch (Throwable $e) { error_log('HelpGuard resend: ' . $e->getMessage()); }
     echo json_encode(['status'=>'success','message'=>'Verification email resent. Please check your inbox.']); exit;

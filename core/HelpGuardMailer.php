@@ -6,7 +6,7 @@
  * Configuration: edit email_config.php – never put credentials directly here.
  */
 
-require_once __DIR__ . '/email_config.php';
+require_once __DIR__ . '/../config/email.php';
 
 class HelpGuardMailer
 {

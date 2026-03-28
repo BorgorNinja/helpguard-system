@@ -31,4 +31,10 @@ define('MAIL_FROM_NAME', 'HelpGuard');
 // ─── Application URL (no trailing slash) ─────────────────────────────────────
 // Change this to your actual domain in production:
 //   define('APP_URL', 'https://yourdomain.com/helpguard');
-define('APP_URL', 'http://localhost');        // ← CHANGE FOR PROD
+// !! IMPORTANT: Set this to the EXACT URL of your project root — no trailing slash.
+// If your project is at http://localhost/helpguard-system/ then set:
+//   define('APP_URL', 'http://localhost/helpguard-system');
+// If served from webroot:
+//   define('APP_URL', 'http://localhost');
+// Wrong APP_URL = password reset / verification links point to wrong address.
+define('APP_URL', 'http://localhost');        // ← CHANGE THIS TO MATCH YOUR INSTALL PATH

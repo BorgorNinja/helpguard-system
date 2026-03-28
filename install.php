@@ -55,19 +55,67 @@ $steps[] = ['ok', 'Selected database <code>' . DB_NAME . '</code>'];
 $conn->query("SET FOREIGN_KEY_CHECKS = 0");
 
 // ── 2. users ─────────────────────────────────────────────────────────────────
-run($conn, 'Create table <code>users</code>',
+run($conn, 'Create table <code>users</code> (with email verification & password reset columns)',
     "CREATE TABLE IF NOT EXISTS `users` (
-        `id`         INT(11)      NOT NULL AUTO_INCREMENT,
-        `first_name` VARCHAR(100) NOT NULL,
-        `last_name`  VARCHAR(100) NOT NULL,
-        `email`      VARCHAR(191) NOT NULL,
-        `password`   VARCHAR(255) NOT NULL,
-        `role`       ENUM('user','admin') NOT NULL DEFAULT 'user',
-        `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `id`                  INT(11)      NOT NULL AUTO_INCREMENT,
+        `first_name`          VARCHAR(100) NOT NULL,
+        `last_name`           VARCHAR(100) NOT NULL,
+        `email`               VARCHAR(191) NOT NULL,
+        `phone_number`        VARCHAR(30)  DEFAULT NULL,
+        `password`            VARCHAR(255) NOT NULL,
+        `role`                ENUM('user','admin') NOT NULL DEFAULT 'user',
+        `email_verified`      TINYINT(1)   NOT NULL DEFAULT 0
+            COMMENT '0 = pending verification, 1 = verified',
+        `verification_token`  VARCHAR(64)  DEFAULT NULL
+            COMMENT 'Email verification token (64-char hex)',
+        `token_expires_at`    DATETIME     DEFAULT NULL
+            COMMENT 'Verification token expiry (24 hours)',
+        `reset_token`         VARCHAR(64)  DEFAULT NULL
+            COMMENT 'Password reset token (64-char hex)',
+        `reset_token_expires` DATETIME     DEFAULT NULL
+            COMMENT 'Password reset token expiry (1 hour)',
+        `avatar_color`        VARCHAR(7)   NOT NULL DEFAULT '#1c57b2'
+            COMMENT 'Hex colour for user avatar',
+        `gps_lat`             DECIMAL(10,7) DEFAULT NULL,
+        `gps_lng`             DECIMAL(10,7) DEFAULT NULL,
+        `created_at`          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`id`),
-        UNIQUE KEY `uq_email` (`email`)
+        UNIQUE KEY `uq_email`              (`email`),
+        KEY        `idx_reset_token`       (`reset_token`),
+        KEY        `idx_verification_token`(`verification_token`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 );
+
+// ── 2b. Ensure all required columns exist on users (for existing installs) ──
+// Safe to run on fresh installs — IF NOT EXISTS means nothing breaks.
+$userColChecks = [
+    'email_verified'      => "ALTER TABLE `users` ADD COLUMN `email_verified` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`",
+    'verification_token'  => "ALTER TABLE `users` ADD COLUMN `verification_token` VARCHAR(64) DEFAULT NULL AFTER `email_verified`",
+    'token_expires_at'    => "ALTER TABLE `users` ADD COLUMN `token_expires_at` DATETIME DEFAULT NULL AFTER `verification_token`",
+    'reset_token'         => "ALTER TABLE `users` ADD COLUMN `reset_token` VARCHAR(64) DEFAULT NULL AFTER `token_expires_at`",
+    'reset_token_expires' => "ALTER TABLE `users` ADD COLUMN `reset_token_expires` DATETIME DEFAULT NULL AFTER `reset_token`",
+    'avatar_color'        => "ALTER TABLE `users` ADD COLUMN `avatar_color` VARCHAR(7) NOT NULL DEFAULT '#1c57b2'",
+    'gps_lat'             => "ALTER TABLE `users` ADD COLUMN `gps_lat` DECIMAL(10,7) DEFAULT NULL",
+    'gps_lng'             => "ALTER TABLE `users` ADD COLUMN `gps_lng` DECIMAL(10,7) DEFAULT NULL",
+    'phone_number'        => "ALTER TABLE `users` ADD COLUMN `phone_number` VARCHAR(30) DEFAULT NULL AFTER `email`",
+];
+$conn->query("USE `helpguard`");
+$existingCols = [];
+$colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='helpguard' AND TABLE_NAME='users'");
+if ($colRes) { while ($r = $colRes->fetch_row()) $existingCols[] = $r[0]; }
+foreach ($userColChecks as $col => $sql) {
+    if (!in_array($col, $existingCols)) {
+        if ($conn->query($sql)) {
+            $steps[] = ['ok', "Added missing column <code>$col</code> to <code>users</code>"];
+        } else {
+            $steps[] = ['error', "Failed to add <code>$col</code>: " . htmlspecialchars($conn->error)];
+        }
+    } else {
+        $steps[] = ['skip', "Column <code>$col</code> already exists in <code>users</code> — skipped"];
+    }
+}
+// Mark existing unverified users as verified so no lockout
+$conn->query("UPDATE `users` SET `email_verified`=1 WHERE `email_verified`=0 AND `created_at` < NOW()");
 
 // ── 3. reports ───────────────────────────────────────────────────────────────
 run($conn, 'Create table <code>reports</code>',
@@ -194,6 +242,78 @@ if ($chk->num_rows === 0) {
 } else {
     $chk->close();
     $steps[] = ['skip', 'Admin account <code>admin@helpguard.ph</code> already exists — skipped'];
+}
+
+// ── 8. report_images table ───────────────────────────────────────────────────
+run($conn, 'Create table <code>report_images</code> (photo attachments)',
+    "CREATE TABLE IF NOT EXISTS `report_images` (
+      `id`            int(11)      NOT NULL AUTO_INCREMENT,
+      `report_id`     int(11)      NOT NULL,
+      `file_name`     varchar(255) NOT NULL,
+      `original_name` varchar(255) DEFAULT NULL,
+      `mime_type`     varchar(100) DEFAULT NULL,
+      `file_size`     int(11)      DEFAULT NULL,
+      `uploaded_at`   timestamp    NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (`id`),
+      KEY `report_id` (`report_id`),
+      CONSTRAINT `fk_images_report` FOREIGN KEY (`report_id`)
+        REFERENCES `reports` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
+// ── 9. emergency_contacts table ───────────────────────────────────────────────
+run($conn, 'Create table <code>emergency_contacts</code> (LGU, Hospital, Traffic, etc.)',
+    "CREATE TABLE IF NOT EXISTS `emergency_contacts` (
+      `id`             int(11)      NOT NULL AUTO_INCREMENT,
+      `name`           varchar(255) NOT NULL,
+      `type`           enum('lgu','hospital','traffic','barangay','police','fire','other') NOT NULL DEFAULT 'other',
+      `barangay`       varchar(150) DEFAULT NULL,
+      `city`           varchar(150) NOT NULL,
+      `province`       varchar(150) DEFAULT NULL,
+      `contact_number` varchar(50)  DEFAULT NULL,
+      `contact_email`  varchar(191) DEFAULT NULL,
+      `is_active`      tinyint(1)   NOT NULL DEFAULT 1,
+      `created_at`     timestamp    NOT NULL DEFAULT current_timestamp(),
+      `updated_at`     timestamp    NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+      PRIMARY KEY (`id`),
+      KEY `idx_city` (`city`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
+// ── 10. contact_notifications table ──────────────────────────────────────────
+run($conn, 'Create table <code>contact_notifications</code> (notification log)',
+    "CREATE TABLE IF NOT EXISTS `contact_notifications` (
+      `id`         int(11) NOT NULL AUTO_INCREMENT,
+      `report_id`  int(11) NOT NULL,
+      `contact_id` int(11) NOT NULL,
+      `method`     enum('email','sms','auto_call') NOT NULL DEFAULT 'email',
+      `status`     enum('sent','failed','pending')  NOT NULL DEFAULT 'pending',
+      `sent_at`    timestamp NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (`id`),
+      KEY `report_id` (`report_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+);
+
+// ── 11. Add phone_number column to users ─────────────────────────────────────
+$colCheck = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA='helpguard' AND TABLE_NAME='users' AND COLUMN_NAME='phone_number'");
+if ($colCheck && $colCheck->num_rows === 0) {
+    run($conn, 'Add <code>phone_number</code> column to <code>users</code>',
+        "ALTER TABLE `users` ADD COLUMN `phone_number` varchar(30) DEFAULT NULL AFTER `email`");
+} else {
+    $steps[] = ['skip', 'Column <code>phone_number</code> already exists — skipped'];
+}
+
+// ── Create uploads directory if writable ─────────────────────────────────────
+$uploadsDir = __DIR__ . '/uploads/reports/';
+if (!is_dir($uploadsDir)) {
+    if (@mkdir($uploadsDir, 0755, true)) {
+        $steps[] = ['ok', 'Created directory <code>uploads/reports/</code>'];
+    } else {
+        $steps[] = ['error', 'Could not create <code>uploads/reports/</code> — create it manually and set chmod 755'];
+    }
+} else {
+    $steps[] = ['skip', 'Directory <code>uploads/reports/</code> already exists'];
 }
 
 $conn->close();

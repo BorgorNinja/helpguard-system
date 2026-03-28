@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
             $upd->execute(); $upd->close();
             try {
-                require_once __DIR__ . '/HelpGuardMailer.php';
+                require_once __DIR__ . '/core/HelpGuardMailer.php';
                 sendVerificationEmail($email, $user['first_name'], $newToken);
             } catch (Throwable $e) { error_log('HelpGuard resend: ' . $e->getMessage()); }
         }

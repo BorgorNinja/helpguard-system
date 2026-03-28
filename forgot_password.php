@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -18,15 +18,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     if ($user) {
-        $token     = bin2hex(random_bytes(32));
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $token = bin2hex(random_bytes(32));
+        // Use DATE_ADD(NOW(), INTERVAL 1 HOUR) so both the write and the later
+        // WHERE reset_token_expires > NOW() check use MySQL's clock — no PHP/MySQL
+        // timezone mismatch possible.
         $upd = $conn->prepare(
-            "UPDATE users SET reset_token=?, reset_token_expires=? WHERE id=?"
+            "UPDATE users SET reset_token=?, reset_token_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?"
         );
-        $upd->bind_param("ssi", $token, $expiresAt, $user['id']);
-        $upd->execute(); $upd->close();
+        if (!$upd) {
+            error_log('HelpGuard reset prepare error: ' . $conn->error . ' — ensure migration 002 has been run (reset_token column may be missing).');
+        } else {
+            $upd->bind_param("si", $token, $user['id']);
+            $upd->execute();
+            $upd->close();
+        }
         try {
-            require_once __DIR__ . '/HelpGuardMailer.php';
+            require_once __DIR__ . '/core/HelpGuardMailer.php';
             sendPasswordResetEmail($email, $user['first_name'], $token);
         } catch (Throwable $e) {
             error_log('HelpGuard reset email error: ' . $e->getMessage());

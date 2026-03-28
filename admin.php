@@ -3,7 +3,7 @@ session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php"); exit;
 }
-require 'db_connect.php';
+require __DIR__ . '/config/db.php';
 
 $total_users    = $conn->query("SELECT COUNT(*) FROM users")->fetch_row()[0];
 $total_reports  = $conn->query("SELECT COUNT(*) FROM reports WHERE is_archived=0")->fetch_row()[0];
@@ -235,6 +235,9 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
       <button class="menu-item" id="navLogs" onclick="showTab('logs')">
         <i class="fas fa-scroll"></i> Login Logs
       </button>
+      <button class="menu-item" id="navContacts" onclick="showTab('contacts')">
+        <i class="fas fa-address-book"></i> Emergency Contacts
+      </button>
     </nav>
     <div class="nav-section" style="margin-top:16px;">Quick Links</div>
     <nav class="menu">
@@ -394,11 +397,98 @@ tr:hover td{background:#fafbff;transition:background 0.15s;}
       </div>
     </div>
 
+    <div class="tab-panel" id="tab-contacts">
+      <div class="panel">
+        <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div class="panel-title"><i class="fas fa-address-book"></i> Emergency Contacts</div>
+          <button class="btn-action approve" onclick="openContactModal()"><i class="fas fa-plus"></i> Add Contact</button>
+        </div>
+        <div style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;">
+          <input type="text" id="contactSearch" placeholder="Search by name, city..." onkeyup="renderContacts()" style="padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.87rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;flex:1;min-width:180px;outline:none;">
+          <select id="contactTypeFilter" onchange="renderContacts()" style="padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.87rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;">
+            <option value="">All Types</option>
+            <option value="lgu">LGU</option>
+            <option value="hospital">Hospital</option>
+            <option value="traffic">Traffic Mgt.</option>
+            <option value="police">Police</option>
+            <option value="fire">Fire</option>
+            <option value="barangay">Barangay</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <div class="loading" id="contactsLoading"><i class="fas fa-spinner"></i> Loading contacts...</div>
+          <table id="contactsTable" style="display:none;">
+            <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Barangay</th><th>City</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="contactsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT MODAL -->
+    <div class="modal-overlay" id="contactModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <h3 id="contactModalTitle" style="font-size:1.05rem;font-weight:700;"><i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Add Emergency Contact</h3>
+          <button onclick="closeContactModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div id="contactModalMsg" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.84rem;margin-bottom:14px;"></div>
+        <input type="hidden" id="c_id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="grid-column:1/-1;">
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Office / Agency Name *</label>
+            <input id="c_name" type="text" placeholder="e.g. Imus City Health Office" maxlength="255" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Type *</label>
+            <select id="c_type" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;">
+              <option value="lgu">LGU</option>
+              <option value="hospital">Hospital</option>
+              <option value="traffic">Traffic Mgt.</option>
+              <option value="police">Police</option>
+              <option value="fire">Fire</option>
+              <option value="barangay">Barangay</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Barangay <span style="font-weight:400;color:var(--muted);">(blank = city-wide)</span></label>
+            <input id="c_barangay" type="text" placeholder="Optional" maxlength="150" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">City / Municipality *</label>
+            <input id="c_city" type="text" placeholder="e.g. Imus" maxlength="150" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Province</label>
+            <input id="c_province" type="text" placeholder="e.g. Cavite" maxlength="150" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Contact Number</label>
+            <input id="c_phone" type="text" placeholder="e.g. (046) 471-0100" maxlength="50" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:5px;">Contact Email</label>
+            <input id="c_email" type="email" placeholder="office@example.gov.ph" maxlength="191" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:0.88rem;background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;outline:none;">
+          </div>
+          <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="c_active" checked style="width:16px;height:16px;accent-color:var(--blue);">
+            <label for="c_active" style="font-size:0.85rem;font-weight:500;cursor:pointer;">Active (receives notifications)</label>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+          <button onclick="closeContactModal()" style="padding:11px 22px;border:1.5px solid var(--border);background:var(--card);border-radius:10px;font-size:0.9rem;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;color:var(--text);">Cancel</button>
+          <button onclick="saveContact()" id="contactSaveBtn" style="padding:11px 22px;background:linear-gradient(135deg,var(--blue-light,#3a8dff),var(--blue,#1c57b2));color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;"><i class="fas fa-floppy-disk"></i> Save</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
 <script>
-let allReports=[], allUsers=[], allLogs=[];
+let allReports=[], allUsers=[], allLogs=[], allContacts=[];
 let currentTab='overview';
 
 // ── Sidebar ──────────────────────────────────────────────────
@@ -417,6 +507,7 @@ const tabTitles = {
   users:'<i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i>Manage Users',
   posts:'<i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:8px;"></i>Manage Posts',
   logs:'<i class="fas fa-scroll" style="color:var(--blue);margin-right:8px;"></i>Login Logs',
+  contacts:'<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Emergency Contacts',
 };
 function showTab(name){
   currentTab=name;
@@ -426,15 +517,16 @@ function showTab(name){
   document.getElementById('nav'+name.charAt(0).toUpperCase()+name.slice(1))?.classList.add('active');
   document.getElementById('pageTitle').innerHTML=tabTitles[name];
   // Lazy load
-  if(name==='users' && allUsers.length===0) loadUsers();
-  if(name==='posts' && allReports.length===0) loadReports();
-  if(name==='logs' && allLogs.length===0) loadLogs();
+  if(name==='users'    && allUsers.length===0)    loadUsers();
+  if(name==='posts'    && allReports.length===0)  loadReports();
+  if(name==='logs'     && allLogs.length===0)     loadLogs();
+  if(name==='contacts' && allContacts.length===0) loadContacts();
   if(window.innerWidth<=900) closeSidebar();
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────────
 async function loadOverview(){
-  const res=await fetch('api.php?action=admin_get_reports');
+  const res=await fetch('api/reports.php?action=admin_get_reports');
   const data=await res.json();
   if(data.status==='success'){
     allReports=data.reports;
@@ -459,7 +551,7 @@ async function loadOverview(){
 
 // ── USERS ─────────────────────────────────────────────────────
 async function loadUsers(){
-  const res=await fetch('api.php?action=admin_get_users');
+  const res=await fetch('api/reports.php?action=admin_get_users');
   const data=await res.json();
   if(data.status==='success'){
     allUsers=data.users;
@@ -503,7 +595,7 @@ function renderUsers(){
 async function deleteUser(uid, name){
   if(!confirm(`Remove user "${name}"?\n\nThis will delete their account and all their reports. This cannot be undone.`)) return;
   const fd=new FormData(); fd.append('action','admin_delete_user'); fd.append('user_id',uid);
-  const res=await fetch('api.php',{method:'POST',body:fd});
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
   const data=await res.json();
   if(data.status==='success'){
     allUsers=allUsers.filter(u=>u.id!=uid);
@@ -518,7 +610,7 @@ document.getElementById('userRoleFilter').addEventListener('change',renderUsers)
 // ── POSTS ─────────────────────────────────────────────────────
 async function loadReports(){
   if(allReports.length>0){renderPosts();document.getElementById('postsLoading').style.display='none';document.getElementById('postsTable').style.display='table';return;}
-  const res=await fetch('api.php?action=admin_get_reports');
+  const res=await fetch('api/reports.php?action=admin_get_reports');
   const data=await res.json();
   if(data.status==='success'){
     allReports=data.reports;
@@ -566,7 +658,7 @@ async function postAction(id, type){
   const fd=new FormData();
   fd.append('action',type==='delete'?'delete_report':'restore_report');
   fd.append('report_id',id);
-  const res=await fetch('api.php',{method:'POST',body:fd});
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
   const data=await res.json();
   if(data.status==='success'){
     const r=allReports.find(x=>x.id==id);
@@ -580,7 +672,7 @@ document.getElementById('postArchived').addEventListener('change',renderPosts);
 
 // ── LOGS ─────────────────────────────────────────────────────
 async function loadLogs(){
-  const res=await fetch('api.php?action=admin_get_logs');
+  const res=await fetch('api/reports.php?action=admin_get_logs');
   const data=await res.json();
   if(data.status==='success'){
     allLogs=data.logs;
@@ -605,6 +697,149 @@ async function loadLogs(){
 }
 
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ══════════════════════════════════════════════════════════════
+// EMERGENCY CONTACTS
+// ══════════════════════════════════════════════════════════════
+const TYPE_LABELS = {
+  lgu:'LGU', hospital:'Hospital', traffic:'Traffic Mgt.',
+  police:'Police', fire:'Fire', barangay:'Barangay', other:'Other'
+};
+const TYPE_COLORS = {
+  lgu:'#1c57b2', hospital:'#e53e3e', traffic:'#dd6b20',
+  police:'#2d6a2d', fire:'#c05621', barangay:'#6b46c1', other:'#718096'
+};
+
+async function loadContacts(){
+  document.getElementById('contactsLoading').style.display='flex';
+  document.getElementById('contactsTable').style.display='none';
+  try{
+    const res  = await fetch('api/contacts.php?action=admin_list');
+    const data = await res.json();
+    if(data.status==='success'){
+      allContacts = data.contacts;
+      renderContacts();
+    }
+  }catch(e){ console.error('Contacts load error',e); }
+  document.getElementById('contactsLoading').style.display='none';
+  document.getElementById('contactsTable').style.display='';
+}
+
+function renderContacts(){
+  const search = (document.getElementById('contactSearch')?.value||'').toLowerCase();
+  const typeF  = document.getElementById('contactTypeFilter')?.value||'';
+  let rows = allContacts.filter(c=>{
+    if(typeF && c.type!==typeF) return false;
+    if(search){
+      const hay=(c.name+c.city+(c.barangay||'')+(c.contact_email||'')+(c.contact_number||'')).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  const body = document.getElementById('contactsBody');
+  if(!rows.length){
+    body.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px;">No contacts found.</td></tr>`;
+    return;
+  }
+  const col = c => `background:${TYPE_COLORS[c.type]||'#718096'}1a;color:${TYPE_COLORS[c.type]||'#718096'};padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:700;`;
+  body.innerHTML = rows.map((c,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${esc(c.name)}</strong></td>
+      <td><span style="${col(c)}">${TYPE_LABELS[c.type]||c.type}</span></td>
+      <td>${c.barangay ? esc(c.barangay) : '<span style="color:var(--muted);font-size:0.8rem;">City-wide</span>'}</td>
+      <td>${esc(c.city)}${c.province?', '+esc(c.province):''}</td>
+      <td>${c.contact_number?`<a href="tel:${esc(c.contact_number)}" style="color:var(--blue);text-decoration:none;">${esc(c.contact_number)}</a>`:'<span style="color:var(--muted);">—</span>'}</td>
+      <td style="font-size:0.82rem;">${c.contact_email?`<a href="mailto:${esc(c.contact_email)}" style="color:var(--blue);text-decoration:none;">${esc(c.contact_email)}</a>`:'<span style="color:var(--muted);">—</span>'}</td>
+      <td><span style="padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:700;${c.is_active?'background:#f0fff4;color:#38a169;':'background:#fff5f5;color:#e53e3e;'}">${c.is_active?'Active':'Inactive'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn-action approve" style="padding:5px 12px;font-size:0.78rem;" onclick="editContact(${c.id})"><i class="fas fa-pencil"></i> Edit</button>
+        <button class="btn-action archive" style="padding:5px 12px;font-size:0.78rem;margin-left:4px;" onclick="deleteContact(${c.id},'${esc(c.name).replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openContactModal(contact=null){
+  document.getElementById('contactModalMsg').style.display='none';
+  document.getElementById('c_id').value      = contact?.id    || '';
+  document.getElementById('c_name').value    = contact?.name  || '';
+  document.getElementById('c_type').value    = contact?.type  || 'lgu';
+  document.getElementById('c_barangay').value= contact?.barangay || '';
+  document.getElementById('c_city').value    = contact?.city  || '';
+  document.getElementById('c_province').value= contact?.province || '';
+  document.getElementById('c_phone').value   = contact?.contact_number || '';
+  document.getElementById('c_email').value   = contact?.contact_email  || '';
+  document.getElementById('c_active').checked= contact ? !!contact.is_active : true;
+  document.getElementById('contactModalTitle').innerHTML =
+    contact ? '<i class="fas fa-pencil" style="color:var(--blue);margin-right:8px;"></i>Edit Emergency Contact'
+            : '<i class="fas fa-address-book" style="color:var(--blue);margin-right:8px;"></i>Add Emergency Contact';
+  const ol = document.getElementById('contactModalOverlay');
+  ol.style.display='flex';
+}
+
+function closeContactModal(){
+  document.getElementById('contactModalOverlay').style.display='none';
+}
+
+function editContact(id){
+  const c = allContacts.find(x=>x.id===id);
+  if(c) openContactModal(c);
+}
+
+async function saveContact(){
+  const btn  = document.getElementById('contactSaveBtn');
+  const msg  = document.getElementById('contactModalMsg');
+  const id   = document.getElementById('c_id').value;
+  const name = document.getElementById('c_name').value.trim();
+  const city = document.getElementById('c_city').value.trim();
+  if(!name||!city){
+    msg.style.cssText='display:block;background:#fff5f5;color:#c62828;padding:10px 14px;border-radius:8px;font-size:0.84rem;margin-bottom:14px;';
+    msg.textContent='Name and city are required.'; return;
+  }
+  const fd = new FormData();
+  fd.append('action', id ? 'update' : 'create');
+  if(id) fd.append('id', id);
+  fd.append('name',            name);
+  fd.append('type',            document.getElementById('c_type').value);
+  fd.append('barangay',        document.getElementById('c_barangay').value.trim());
+  fd.append('city',            city);
+  fd.append('province',        document.getElementById('c_province').value.trim());
+  fd.append('contact_number',  document.getElementById('c_phone').value.trim());
+  fd.append('contact_email',   document.getElementById('c_email').value.trim());
+  fd.append('is_active',       document.getElementById('c_active').checked ? '1' : '0');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+  try{
+    const res  = await fetch('api/contacts.php', {method:'POST',body:fd});
+    const data = await res.json();
+    if(data.status==='success'){
+      closeContactModal();
+      allContacts=[];   // force reload
+      loadContacts();
+    } else {
+      msg.style.cssText='display:block;background:#fff5f5;color:#c62828;padding:10px 14px;border-radius:8px;font-size:0.84rem;margin-bottom:14px;';
+      msg.textContent = data.message || 'Save failed.';
+    }
+  }catch{
+    msg.style.cssText='display:block;background:#fff5f5;color:#c62828;padding:10px 14px;border-radius:8px;font-size:0.84rem;margin-bottom:14px;';
+    msg.textContent='Network error. Please try again.';
+  }
+  btn.disabled=false; btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save';
+}
+
+async function deleteContact(id, name){
+  if(!confirm(`Remove "${name}" from emergency contacts?`)) return;
+  const fd=new FormData(); fd.append('action','delete'); fd.append('id',id);
+  const res  = await fetch('api/contacts.php',{method:'POST',body:fd});
+  const data = await res.json();
+  if(data.status==='success'){ allContacts=[]; loadContacts(); }
+  else alert(data.message||'Could not delete.');
+}
+
+// Close contacts modal when clicking outside
+document.getElementById('contactModalOverlay').addEventListener('click', function(e){
+  if(e.target===this) closeContactModal();
+});
 
 // ── INIT ─────────────────────────────────────────────────────
 loadOverview();
