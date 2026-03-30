@@ -1,6 +1,9 @@
 # HelpGuard
 ### A Community-Driven Web-Based Safety Incident Reporting & Geospatial Monitoring System
 
+> Undergraduate Project — Cavite State University – Imus City, 2026  
+> Bachelor of Science in Information Technology
+
 ---
 
 ## Project Structure

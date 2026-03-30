@@ -363,6 +363,50 @@ body.dark .legend-item{color:#8b949e;}
 .radius-row input[type=range]{flex:1;accent-color:var(--blue);height:4px;}
 .radius-val{font-size:0.82rem;font-weight:700;color:var(--blue);min-width:60px;text-align:right;}
 
+/* ─── REPORT DETAIL OVERLAY ─── */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:8000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity 0.22s;}
+.detail-overlay.open{opacity:1;pointer-events:auto;}
+.detail-box{background:var(--modal-bg);border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.28);display:flex;flex-direction:column;transform:translateY(18px) scale(0.97);transition:transform 0.22s cubic-bezier(0.22,1,0.36,1);}
+.detail-overlay.open .detail-box{transform:translateY(0) scale(1);}
+.detail-top{padding:22px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0;}
+.detail-title{font-size:1.15rem;font-weight:800;color:var(--text);line-height:1.35;flex:1;}
+.detail-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:8px;transition:background 0.15s;flex-shrink:0;}
+.detail-close:hover{background:var(--bg);}
+.detail-status-row{padding:10px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.detail-badge{padding:4px 14px;border-radius:50px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.detail-cat-tag{font-size:0.76rem;background:var(--bg);padding:4px 12px;border-radius:8px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.detail-meta{padding:14px 24px;display:flex;flex-direction:column;gap:7px;font-size:0.83rem;color:var(--muted);flex-shrink:0;}
+.detail-meta span{display:flex;align-items:center;gap:8px;}
+.detail-meta i{width:16px;text-align:center;flex-shrink:0;}
+.detail-divider{border:none;border-top:1px solid var(--card-border);margin:0 24px;}
+.detail-desc{padding:16px 24px;font-size:0.9rem;color:var(--text);line-height:1.8;flex-shrink:0;}
+.detail-photos{padding:0 24px 20px;flex-shrink:0;}
+.detail-photos-label{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;}
+.detail-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.detail-photo-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;border:1px solid var(--card-border);}
+.detail-photo-grid img:hover{transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,0.18);}
+.detail-photo-spinner{display:flex;align-items:center;gap:8px;font-size:0.83rem;color:var(--muted);padding:4px 0;}
+.detail-votes{padding:16px 24px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--card-border);flex-shrink:0;}
+.detail-votes .vote-btn{display:flex;align-items:center;gap:7px;padding:8px 18px;border:1.5px solid var(--input-border);border-radius:9px;font-size:0.85rem;font-weight:600;cursor:pointer;background:var(--card);color:var(--text);transition:all 0.18s;font-family:'Poppins',sans-serif;}
+.detail-votes .vote-btn.voted{background:#ebf2ff;border-color:var(--blue);color:var(--blue);}
+.detail-votes .vote-btn.down.voted{background:#fff0f0;border-color:var(--red);color:var(--red);}
+body.dark .detail-votes .vote-btn.voted{background:#1f3a5f;color:var(--blue-light);}
+body.dark .detail-votes .vote-btn.down.voted{background:#3d1f1f;color:#fc8181;}
+.detail-map-btn{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:0.82rem;font-weight:600;cursor:pointer;background:rgba(58,141,255,0.1);border:1.5px solid rgba(58,141,255,0.3);color:var(--blue);transition:all 0.18s;font-family:'Poppins',sans-serif;margin-left:auto;}
+.detail-map-btn:hover{background:var(--blue);color:#fff;}
+.detail-loading{display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--muted);gap:10px;font-size:0.9rem;}
+/* Lightbox for fullsize photo */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:none;align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:92vw;max-height:88vh;border-radius:10px;object-fit:contain;box-shadow:0 24px 80px rgba(0,0,0,0.5);}
+/* Report card — clickable */
+.report-card{cursor:pointer;}
+
+/* ─── MAP POPUP PHOTO ─── */
+.rm-popup-photos{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.rm-popup-photos img{width:68px;height:52px;object-fit:cover;border-radius:6px;border:1px solid rgba(0,0,0,0.08);}
+.rm-popup-photos-loading{font-size:0.72rem;color:#999;margin-top:6px;}
+
 /* ─── PHOTO UPLOAD ─── */
 .photo-upload-area{border:2px dashed var(--input-border);border-radius:10px;padding:18px 14px;text-align:center;cursor:pointer;color:var(--muted);font-size:0.84rem;transition:border-color 0.2s,background 0.2s;line-height:1.7;}
 .photo-upload-area:hover{border-color:var(--blue-light);background:rgba(58,141,255,0.04);}
@@ -688,6 +732,24 @@ body.dark .get-gps-btn:hover{background:#14532d;}
 </div>
 
 <!-- ════════════════════════════════════════
+     REPORT DETAIL OVERLAY
+════════════════════════════════════════ -->
+<div class="detail-overlay" id="detailOverlay" onclick="outsideCloseDetail(event)">
+  <div class="detail-box" id="detailBox">
+    <div class="detail-loading" id="detailLoading">
+      <i class="fas fa-spinner fa-spin"></i> Loading report…
+    </div>
+    <!-- Content injected by JS -->
+    <div id="detailContent" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX (full-size photo) -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="Full size photo">
+</div>
+
+<!-- ════════════════════════════════════════
      PROFILE MODAL (C)
 ════════════════════════════════════════ -->
 <div class="modal-overlay" id="profileOverlay" onclick="outsideCloseProfile(event)">
@@ -916,7 +978,7 @@ function renderFeed() {
     const isMine  = r.user_id == MY_USER_ID;
     const upVoted = r.user_vote==='up', downVoted = r.user_vote==='down';
     const hasPin  = r.latitude && r.longitude;
-    return `<div class="report-card ${r.status}" id="card_${r.id}" style="animation-delay:${i*0.04}s;">
+    return `<div class="report-card ${r.status}" id="card_${r.id}" style="animation-delay:${i*0.04}s;" onclick="openReportDetail(${r.id})">
       <div class="card-header"><h3>${esc(r.title)}</h3><span class="badge ${r.status}">${ucFirst(r.status)}</span></div>
       <div class="card-meta">
         <span><i class="fas fa-map-location-dot"></i>${esc(r.location_name)}</span>
@@ -924,14 +986,15 @@ function renderFeed() {
         <span><i class="fas fa-clock"></i>${date}</span>
         <span><i class="fas fa-user"></i>${esc(r.poster_name)}</span>
       </div>
-      <div class="card-body"><p>${esc(r.description)}</p></div>
+      <div class="card-body"><p>${esc((r.description||'').substring(0,180))}${(r.description||'').length>180?'…':''}</p></div>
       <div class="card-footer">
-        <button class="vote-btn ${upVoted?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
-        <button class="vote-btn down ${downVoted?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="down_${r.id}">${r.downvotes}</span></button>
-        ${hasPin ? `<button class="map-pin-chip" onclick="openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>` : ''}
+        <button class="vote-btn ${upVoted?'voted':''}" onclick="event.stopPropagation();vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
+        <button class="vote-btn down ${downVoted?'voted':''}" onclick="event.stopPropagation();vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="down_${r.id}">${r.downvotes}</span></button>
+        ${hasPin ? `<button class="map-pin-chip" onclick="event.stopPropagation();openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>` : ''}
         ${isMine
-          ? `<button class="vote-btn" onclick="deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i></button>`
+          ? `<button class="vote-btn" onclick="event.stopPropagation();deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i></button>`
           : `<span class="category-tag" style="margin-left:auto;"><i class="fas ${catIcon}"></i> ${ucFirst(r.category)}</span>`}
+        <span style="margin-left:auto;font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:4px;pointer-events:none;"><i class="fas fa-arrow-up-right-from-square"></i> View details</span>
       </div>
     </div>`;
   }).join('');
@@ -1089,8 +1152,9 @@ function renderReportsMap() {
     const marker = L.marker(ll,{icon:makeMarkerIcon(r.status)}).addTo(reportsMap);
     rmLayers.push(marker);
 
-    // Rich popup HTML shared by both hover tooltip and click popup
-    const html = `<div class="rm-popup-inner">
+    // Tooltip HTML — includes a photos placeholder that gets populated async on first open
+    const tooltipId = `rmp_${r.id}`;
+    const html = `<div class="rm-popup-inner" id="${tooltipId}">
       <div class="rm-popup-title">${esc(r.title)}</div>
       <span style="${bStyle}">${ucFirst(r.status)}</span>
       <div class="rm-popup-meta">
@@ -1098,14 +1162,34 @@ function renderReportsMap() {
         <span><i class="fas fa-clock" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${date}</span>
         <span><i class="fas fa-map-location-dot" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${esc(r.location_name)}, ${esc(r.city)}</span>
       </div>
-      <div class="rm-popup-desc">${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</div>
+      <div class="rm-popup-desc">${esc((r.description||'').substring(0,140))}${(r.description||'').length>140?'…':''}</div>
       <div class="rm-popup-radius"><i class="fas fa-circle-dot" style="color:${S_COLOR[r.status]};"></i>&nbsp;Affected radius: ${r.radius_m||200}m</div>
+      <div class="rm-popup-photos" id="${tooltipId}_photos"><span class="rm-popup-photos-loading"><i class="fas fa-spinner fa-spin"></i></span></div>
+      <div style="margin-top:8px;font-size:0.72rem;color:${S_COLOR[r.status]};font-weight:600;cursor:pointer;" onclick="openReportDetail(${r.id})"><i class="fas fa-arrow-up-right-from-square"></i> View full details</div>
     </div>`;
 
-    // Hover tooltip (shows on mouseover)
-    marker.bindTooltip(html,{direction:'top',offset:[0,-38],opacity:1,className:'rm-popup',sticky:false,permanent:false});
-    // Click popup (same content)
-    marker.bindPopup(html,{maxWidth:300,className:'rm-popup'});
+    // Hover tooltip — loads photos async on first open
+    const tooltip = L.tooltip({direction:'top',offset:[0,-38],opacity:1,className:'rm-popup',sticky:false,permanent:false}).setContent(html);
+    marker.bindTooltip(tooltip);
+    let photosLoaded_${r.id.toString().replace('-','_')} = false;
+    marker.on('tooltipopen', async () => {
+      const photoEl = document.getElementById('${tooltipId}_photos');
+      if (!photoEl || photosLoaded_${r.id.toString().replace('-','_')}) return;
+      photosLoaded_${r.id.toString().replace('-','_')} = true;
+      try {
+        const res  = await fetch('api/reports.php?action=get_report_images&report_id=${r.id}');
+        const data = await res.json();
+        if (data.status === 'success' && data.images.length) {
+          photoEl.innerHTML = data.images.slice(0,3).map(img =>
+            `<img src="${'${img.url}'}" alt="Photo" onclick="event.stopPropagation();openLightbox(this.src)" title="Click to enlarge">`
+          ).join('');
+        } else {
+          photoEl.remove();
+        }
+      } catch(e) { if(photoEl) photoEl.remove(); }
+    });
+    // Click → open full detail overlay
+    marker.on('click', () => openReportDetail(r.id));
   });
 
   if(bounds.length) reportsMap.fitBounds(bounds,{padding:[50,50],maxZoom:14});
@@ -1208,6 +1292,137 @@ function dismissToast(t){
 // ════════════════════════════════════════════════════════
 // MINI MAP MODAL (from feed card)
 // ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// REPORT DETAIL OVERLAY
+// ════════════════════════════════════════════════════════
+const STATUS_COLOR = { dangerous:'#e53e3e', caution:'#dd6b20', safe:'#38a169' };
+const STATUS_BG    = { dangerous:'#fff0f0', caution:'#fff8f0', safe:'#f0fff4' };
+const STATUS_DARK_BG = { dangerous:'rgba(229,62,62,0.12)', caution:'rgba(221,107,32,0.12)', safe:'rgba(56,161,105,0.12)' };
+
+async function openReportDetail(id) {
+  const r = allReports.find(x => x.id == id);
+  if (!r) return;
+
+  const overlay  = document.getElementById('detailOverlay');
+  const loading  = document.getElementById('detailLoading');
+  const contentEl = document.getElementById('detailContent');
+
+  // Show overlay immediately with spinner
+  contentEl.style.display = 'none';
+  loading.style.display   = 'flex';
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Fetch images in parallel
+  let images = [];
+  try {
+    const res  = await fetch(`api/reports.php?action=get_report_images&report_id=${id}`);
+    const data = await res.json();
+    if (data.status === 'success') images = data.images || [];
+  } catch(e) { /* fail silently — still show report */ }
+
+  const date     = new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const catIcon  = catIcons[r.category] || 'fa-circle-info';
+  const isDark   = document.body.classList.contains('dark');
+  const sColor   = STATUS_COLOR[r.status] || '#888';
+  const sBg      = isDark ? (STATUS_DARK_BG[r.status]||'rgba(136,136,136,0.12)') : (STATUS_BG[r.status]||'#f8f8f8');
+  const isMine   = r.user_id == MY_USER_ID;
+  const upVoted  = r.user_vote === 'up';
+  const downVoted= r.user_vote === 'down';
+  const hasPin   = r.latitude && r.longitude;
+
+  // Photo grid
+  let photoHtml = '';
+  if (images.length) {
+    photoHtml = `
+      <hr class="detail-divider">
+      <div class="detail-photos">
+        <div class="detail-photos-label"><i class="fas fa-camera" style="margin-right:5px;color:${sColor};"></i>Attached Photos (${images.length})</div>
+        <div class="detail-photo-grid">
+          ${images.map(img => `<img src="${img.url}" alt="${esc(img.original_name||'Photo')}" loading="lazy" onclick="openLightbox(this.src)" title="Click to enlarge">`).join('')}
+        </div>
+      </div>`;
+  }
+
+  // Full content
+  contentEl.innerHTML = `
+    <div class="detail-top">
+      <div class="detail-title">${esc(r.title)}</div>
+      <button class="detail-close" onclick="closeReportDetail()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="detail-status-row">
+      <span class="detail-badge" style="background:${sColor};color:#fff;">${ucFirst(r.status)}</span>
+      <span class="detail-cat-tag"><i class="fas ${catIcon}"></i> ${ucFirst(r.category)}</span>
+    </div>
+    <div class="detail-meta">
+      <span><i class="fas fa-map-location-dot" style="color:${sColor};"></i><strong>${esc(r.location_name)}</strong>${r.barangay?', Brgy. '+esc(r.barangay):''}</span>
+      <span><i class="fas fa-city" style="color:#888;"></i>${esc(r.city)}${r.province?', '+esc(r.province):''}</span>
+      <span><i class="fas fa-user" style="color:#888;"></i>Reported by <strong>${esc(r.poster_name)}</strong></span>
+      <span><i class="fas fa-clock" style="color:#888;"></i>${date}</span>
+      <span><i class="fas fa-circle-dot" style="color:${sColor};"></i>Affected radius: <strong>${r.radius_m||200}m</strong></span>
+    </div>
+    <hr class="detail-divider">
+    <div class="detail-desc">${esc(r.description).replace(/\n/g,'<br>')}</div>
+    ${photoHtml}
+    <div class="detail-votes">
+      <button class="vote-btn ${upVoted?'voted':''}" onclick="vote(${r.id},'up');updateDetailVoteBtns(${r.id})">
+        <i class="fas fa-thumbs-up"></i> <span id="dv_up_${r.id}">${r.upvotes}</span>
+      </button>
+      <button class="vote-btn down ${downVoted?'voted':''}" onclick="vote(${r.id},'down');updateDetailVoteBtns(${r.id})">
+        <i class="fas fa-thumbs-down"></i> <span id="dv_down_${r.id}">${r.downvotes}</span>
+      </button>
+      ${hasPin ? `<button class="detail-map-btn" onclick="closeReportDetail();setTimeout(()=>openMiniMap(${r.id}),200);"><i class="fas fa-map-pin"></i> View on Map</button>` : ''}
+      ${isMine ? `<button class="vote-btn" onclick="closeReportDetail();deleteReport(${r.id});" style="border-color:var(--red);color:var(--red);margin-left:auto;"><i class="fas fa-trash-can"></i> Delete</button>` : ''}
+    </div>`;
+
+  loading.style.display    = 'none';
+  contentEl.style.display  = 'flex';
+  contentEl.style.flexDirection = 'column';
+}
+
+function updateDetailVoteBtns(id) {
+  // Sync vote counts & state from allReports into the detail overlay after a vote
+  setTimeout(() => {
+    const r = allReports.find(x => x.id == id);
+    if (!r) return;
+    const upEl   = document.getElementById(`dv_up_${id}`);
+    const downEl = document.getElementById(`dv_down_${id}`);
+    if (upEl)   upEl.textContent   = r.upvotes;
+    if (downEl) downEl.textContent = r.downvotes;
+    // Update button voted class
+    const btns = document.querySelectorAll('.detail-votes .vote-btn');
+    btns.forEach(b => {
+      if (b.querySelector(`#dv_up_${id}`))   b.classList.toggle('voted', r.user_vote==='up');
+      if (b.querySelector(`#dv_down_${id}`)) b.classList.toggle('voted', r.user_vote==='down');
+    });
+  }, 350);
+}
+
+function closeReportDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function outsideCloseDetail(e) {
+  if (e.target === document.getElementById('detailOverlay')) closeReportDetail();
+}
+
+// Lightbox
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// Keyboard: Escape closes detail overlay or lightbox
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('lightbox').classList.contains('open')) { closeLightbox(); return; }
+    if (document.getElementById('detailOverlay').classList.contains('open')) { closeReportDetail(); return; }
+  }
+});
+
 let miniMap=null, miniLayers=[];
 
 function openMiniMap(id){
