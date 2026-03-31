@@ -64,6 +64,31 @@ switch ($action) {
             $reports[] = $row;
         }
         $stmt->close();
+
+        // ── Attach images to each report ──────────────────────────────────
+        if (!empty($reports)) {
+            $images_map = [];
+            $chk_tbl = $conn->query("SHOW TABLES LIKE 'report_images'");
+            if ($chk_tbl && $chk_tbl->num_rows > 0) {
+                $ids_str = implode(',', array_column($reports, 'id'));
+                $img_res = $conn->query(
+                    "SELECT report_id, file_name FROM report_images
+                     WHERE report_id IN ($ids_str) ORDER BY uploaded_at ASC"
+                );
+                if ($img_res) {
+                    while ($img_row = $img_res->fetch_assoc()) {
+                        $rid = (int)$img_row['report_id'];
+                        if (!isset($images_map[$rid])) $images_map[$rid] = [];
+                        $images_map[$rid][] = 'uploads/reports/' . rawurlencode($img_row['file_name']);
+                    }
+                }
+            }
+            foreach ($reports as &$report) {
+                $report['images'] = $images_map[$report['id']] ?? [];
+            }
+            unset($report);
+        }
+
         echo json_encode(['status'=>'success','reports'=>$reports]);
         break;
 

@@ -419,6 +419,57 @@ body.dark .get-gps-btn{background:#1a2e24;}
 body.dark .get-gps-btn:hover{background:#14532d;}
 
 
+/* ─── REPORT DETAIL OVERLAY ─── */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.62);z-index:1200;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(4px);}
+.detail-overlay.open{display:flex;animation:fadeIn 0.22s ease;}
+.detail-modal{background:var(--modal-bg);border-radius:22px;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;position:relative;animation:scaleIn 0.28s cubic-bezier(0.34,1.56,0.64,1);display:flex;flex-direction:column;transition:background 0.3s;}
+.detail-header{padding:22px 24px 0;position:relative;}
+.detail-close{position:absolute;top:16px;right:18px;background:var(--bg);border:none;font-size:1rem;color:var(--muted);cursor:pointer;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;z-index:2;}
+.detail-close:hover{background:#e0e0e0;color:var(--text);}
+body.dark .detail-close:hover{background:#30363d;}
+.detail-status-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.detail-badge{padding:5px 14px;border-radius:50px;font-size:0.76rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#fff;}
+.detail-badge.dangerous{background:var(--red);}
+.detail-badge.caution{background:var(--orange);}
+.detail-badge.safe{background:var(--green);}
+.detail-cat-tag{font-size:0.76rem;background:var(--bg);padding:5px 12px;border-radius:8px;color:var(--muted);font-weight:600;}
+.detail-title{font-size:1.18rem;font-weight:800;color:var(--text);line-height:1.4;margin-bottom:4px;padding-right:40px;}
+.detail-reporter{font-size:0.79rem;color:var(--muted);margin-bottom:18px;}
+.detail-reporter span{font-weight:600;color:var(--text);}
+/* Photo gallery */
+.detail-photos{display:flex;gap:10px;overflow-x:auto;padding:0 24px 16px;scrollbar-width:thin;}
+.detail-photos::-webkit-scrollbar{height:5px;}.detail-photos::-webkit-scrollbar-track{background:var(--bg);border-radius:3px;}.detail-photos::-webkit-scrollbar-thumb{background:var(--input-border);border-radius:3px;}
+.detail-photo{flex-shrink:0;width:220px;height:155px;border-radius:13px;overflow:hidden;border:2px solid var(--card-border);cursor:pointer;position:relative;transition:transform 0.2s,box-shadow 0.2s;}
+.detail-photo:hover{transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,0.18);}
+.detail-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+.detail-photo-count{position:absolute;bottom:7px;right:9px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;backdrop-filter:blur(2px);}
+/* Meta grid */
+.detail-body{padding:4px 24px 24px;display:flex;flex-direction:column;gap:16px;}
+.detail-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.detail-meta-item{background:var(--bg);border-radius:11px;padding:12px 14px;}
+.detail-meta-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:4px;}
+.detail-meta-value{font-size:0.87rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;}
+.detail-meta-value i{font-size:0.85rem;flex-shrink:0;}
+.detail-desc-box{background:var(--bg);border-radius:11px;padding:14px 16px;}
+.detail-desc-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:8px;}
+.detail-desc-text{font-size:0.88rem;color:var(--text);line-height:1.8;}
+.detail-footer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 24px;border-top:1px solid var(--card-border);}
+.detail-vote-wrap{display:flex;align-items:center;gap:8px;}
+.detail-map-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:1.5px solid var(--blue-light);border-radius:10px;font-size:0.84rem;font-weight:700;color:var(--blue);background:#f0f6ff;cursor:pointer;transition:all 0.2s;font-family:'Poppins',sans-serif;}
+.detail-map-btn:hover{background:#dbeafe;transform:translateY(-1px);}
+body.dark .detail-map-btn{background:#1f3a5f;color:var(--blue-light);border-color:var(--blue);}
+/* Lightbox */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1400;justify-content:center;align-items:center;cursor:zoom-out;}
+.lightbox.open{display:flex;animation:fadeIn 0.18s ease;}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+.lightbox-close{position:absolute;top:18px;right:22px;background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:1.3rem;cursor:pointer;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+.lightbox-close:hover{background:rgba(255,255,255,0.22);}
+/* Popup photo in map */
+.map-popup-photo{width:100%;height:130px;object-fit:cover;border-radius:10px 10px 0 0;display:block;margin-bottom:0;}
+.map-popup-photo-wrap{margin:-0px -0px 10px;overflow:hidden;border-radius:10px 10px 0 0;cursor:pointer;}
+.map-popup-view-btn{display:block;width:100%;margin-top:10px;padding:7px 0;background:var(--blue,#1c57b2);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;text-align:center;transition:background 0.2s;}
+.map-popup-view-btn:hover{background:#0e3d8c;}
+
 @media(max-width:900px){
   .sidebar{transform:translateX(calc(-1*var(--sidebar-w)));}
   .sidebar.mobile-open{transform:translateX(0);}
@@ -429,6 +480,8 @@ body.dark .get-gps-btn:hover{background:#14532d;}
   .topbar h1{font-size:1rem;}
   .content{padding:16px;}
   .user-name,.gps-chip{display:none;}
+  .detail-meta-grid{grid-template-columns:1fr;}
+  .detail-photo{width:180px;height:130px;}
   #mainMap,#reportsMapFull{height:420px;}
 }
 @media(max-width:600px){
@@ -745,6 +798,38 @@ body.dark .get-gps-btn:hover{background:#14532d;}
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     REPORT DETAIL OVERLAY
+════════════════════════════════════════ -->
+<div class="detail-overlay" id="detailOverlay" onclick="outsideCloseDetail(event)">
+  <div class="detail-modal" id="detailModal">
+    <button class="detail-close" onclick="closeReportDetail()"><i class="fas fa-xmark"></i></button>
+    <div class="detail-header">
+      <div class="detail-status-bar">
+        <span class="detail-badge" id="d_badge"></span>
+        <span class="detail-cat-tag" id="d_cat_tag"></span>
+      </div>
+      <div class="detail-title" id="d_title"></div>
+      <div class="detail-reporter" id="d_reporter"></div>
+    </div>
+    <div class="detail-photos" id="d_photos" style="display:none;"></div>
+    <div class="detail-body">
+      <div class="detail-meta-grid" id="d_meta_grid"></div>
+      <div class="detail-desc-box" id="d_desc_box" style="display:none;">
+        <div class="detail-desc-label"><i class="fas fa-align-left" style="margin-right:5px;"></i>Description</div>
+        <div class="detail-desc-text" id="d_desc"></div>
+      </div>
+    </div>
+    <div class="detail-footer" id="d_footer"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-xmark"></i></button>
+  <img id="lightboxImg" src="" alt="Photo">
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
@@ -916,22 +1001,25 @@ function renderFeed() {
     const isMine  = r.user_id == MY_USER_ID;
     const upVoted = r.user_vote==='up', downVoted = r.user_vote==='down';
     const hasPin  = r.latitude && r.longitude;
-    return `<div class="report-card ${r.status}" id="card_${r.id}" style="animation-delay:${i*0.04}s;">
+    const hasPhotos = r.images && r.images.length > 0;
+    return `<div class="report-card ${r.status}" id="card_${r.id}" style="animation-delay:${i*0.04}s;cursor:pointer;" onclick="openReportDetail(${r.id})">
       <div class="card-header"><h3>${esc(r.title)}</h3><span class="badge ${r.status}">${ucFirst(r.status)}</span></div>
       <div class="card-meta">
         <span><i class="fas fa-map-location-dot"></i>${esc(r.location_name)}</span>
         <span><i class="fas fa-city"></i>${esc(r.city)}${r.province?', '+esc(r.province):''}</span>
         <span><i class="fas fa-clock"></i>${date}</span>
         <span><i class="fas fa-user"></i>${esc(r.poster_name)}</span>
+        ${hasPhotos?`<span><i class="fas fa-camera" style="color:var(--blue-light);"></i>${r.images.length} photo${r.images.length>1?'s':''}</span>`:''}
       </div>
-      <div class="card-body"><p>${esc(r.description)}</p></div>
-      <div class="card-footer">
+      <div class="card-body"><p>${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</p></div>
+      <div class="card-footer" onclick="event.stopPropagation()">
         <button class="vote-btn ${upVoted?'voted':''}" onclick="vote(${r.id},'up')"><i class="fas fa-thumbs-up"></i><span id="up_${r.id}">${r.upvotes}</span></button>
         <button class="vote-btn down ${downVoted?'voted':''}" onclick="vote(${r.id},'down')"><i class="fas fa-thumbs-down"></i><span id="down_${r.id}">${r.downvotes}</span></button>
         ${hasPin ? `<button class="map-pin-chip" onclick="openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>` : ''}
+        <button class="map-pin-chip" style="background:var(--bg);color:var(--muted);border:1.5px solid var(--input-border);margin-left:auto;" onclick="openReportDetail(${r.id})"><i class="fas fa-expand-alt"></i> Details</button>
         ${isMine
-          ? `<button class="vote-btn" onclick="deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i></button>`
-          : `<span class="category-tag" style="margin-left:auto;"><i class="fas ${catIcon}"></i> ${ucFirst(r.category)}</span>`}
+          ? `<button class="vote-btn" onclick="deleteReport(${r.id})" style="border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i></button>`
+          : `<span class="category-tag"><i class="fas ${catIcon}"></i> ${ucFirst(r.category)}</span>`}
       </div>
     </div>`;
   }).join('');
@@ -1040,13 +1128,18 @@ function renderMainMap() {
     mainLayers.push(circle);
     const date   = new Date(r.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
     const marker = L.marker(ll,{icon:makeMarkerIcon(r.status)}).addTo(mainMap);
-    marker.bindPopup(`<div style="min-width:210px;max-width:260px;font-family:'Poppins',sans-serif;font-size:0.82rem;line-height:1.5;">
-      <div style="font-weight:800;font-size:0.93rem;color:#1a1a2e;margin-bottom:6px;">${esc(r.title)}</div>
-      <span style="display:inline-block;background:${S_COLOR[r.status]};color:#fff;padding:2px 10px;border-radius:50px;font-size:0.69rem;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${ucFirst(r.status)}</span>
-      <div style="color:#555;"><i class="fas fa-map-location-dot" style="margin-right:4px;color:${S_COLOR[r.status]};"></i>${esc(r.location_name)}, ${esc(r.city)}</div>
-      <div style="color:#888;font-size:0.74rem;margin-top:3px;">${date} · ${esc(r.poster_name)}</div>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;color:#444;">${esc((r.description||'').substring(0,150))}${(r.description||'').length>150?'…':''}</div>
-      <div style="margin-top:7px;font-size:0.73rem;color:#999;"><i class="fas fa-circle-dot"></i> Radius: ${r.radius_m||200}m</div>
+    const firstPhoto = (r.images && r.images.length > 0) ? r.images[0] : null;
+    marker.bindPopup(`<div style="min-width:210px;max-width:260px;font-family:'Poppins',sans-serif;font-size:0.82rem;line-height:1.5;overflow:hidden;border-radius:12px;">
+      ${firstPhoto ? `<div class="map-popup-photo-wrap"><img class="map-popup-photo" src="${esc(firstPhoto)}" alt="photo" onerror="this.parentElement.style.display='none'"></div>` : ''}
+      <div style="padding:${firstPhoto?'10px':'0'} 12px 10px;">
+        <div style="font-weight:800;font-size:0.93rem;color:#1a1a2e;margin-bottom:6px;">${esc(r.title)}</div>
+        <span style="display:inline-block;background:${S_COLOR[r.status]};color:#fff;padding:2px 10px;border-radius:50px;font-size:0.69rem;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${ucFirst(r.status)}</span>
+        <div style="color:#555;"><i class="fas fa-map-location-dot" style="margin-right:4px;color:${S_COLOR[r.status]};"></i>${esc(r.location_name)}, ${esc(r.city)}</div>
+        <div style="color:#888;font-size:0.74rem;margin-top:3px;">${date} · ${esc(r.poster_name)}</div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;color:#444;">${esc((r.description||'').substring(0,120))}${(r.description||'').length>120?'…':''}</div>
+        <div style="margin-top:7px;font-size:0.73rem;color:#999;"><i class="fas fa-circle-dot"></i> Radius: ${r.radius_m||200}m${r.images&&r.images.length>0?' · <i class="fas fa-camera"></i> '+r.images.length+' photo'+(r.images.length>1?'s':''):''}</div>
+        <button class="map-popup-view-btn" onclick="openReportDetail(${r.id})"><i class="fas fa-expand-alt"></i> Full Details</button>
+      </div>
     </div>`,{maxWidth:280});
     mainLayers.push(marker);
   });
@@ -1089,23 +1182,43 @@ function renderReportsMap() {
     const marker = L.marker(ll,{icon:makeMarkerIcon(r.status)}).addTo(reportsMap);
     rmLayers.push(marker);
 
-    // Rich popup HTML shared by both hover tooltip and click popup
-    const html = `<div class="rm-popup-inner">
+    const firstPhoto = (r.images && r.images.length > 0) ? r.images[0] : null;
+
+    // Tooltip (hover) — compact card with photo
+    const tooltipHtml = `<div class="rm-popup-inner">
+      ${firstPhoto ? `<div style="margin:-14px -16px 10px;overflow:hidden;border-radius:10px 10px 0 0;"><img src="${esc(firstPhoto)}" alt="photo" style="width:100%;height:120px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
       <div class="rm-popup-title">${esc(r.title)}</div>
       <span style="${bStyle}">${ucFirst(r.status)}</span>
       <div class="rm-popup-meta">
         <span><i class="fas fa-user" style="color:${S_COLOR[r.status]};width:14px;text-align:center;"></i>&nbsp;<strong>Reported by:</strong>&nbsp;${esc(r.poster_name)}</span>
         <span><i class="fas fa-clock" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${date}</span>
         <span><i class="fas fa-map-location-dot" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${esc(r.location_name)}, ${esc(r.city)}</span>
+        ${r.images&&r.images.length>0?`<span><i class="fas fa-camera" style="color:var(--blue,#1c57b2);width:14px;text-align:center;"></i>&nbsp;${r.images.length} photo${r.images.length>1?'s':''}</span>`:''}
       </div>
       <div class="rm-popup-desc">${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</div>
       <div class="rm-popup-radius"><i class="fas fa-circle-dot" style="color:${S_COLOR[r.status]};"></i>&nbsp;Affected radius: ${r.radius_m||200}m</div>
     </div>`;
 
+    // Click popup — same content plus "Full Details" button
+    const clickHtml = `<div class="rm-popup-inner">
+      ${firstPhoto ? `<div style="margin:-14px -16px 10px;overflow:hidden;border-radius:10px 10px 0 0;"><img src="${esc(firstPhoto)}" alt="photo" style="width:100%;height:140px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+      <div class="rm-popup-title">${esc(r.title)}</div>
+      <span style="${bStyle}">${ucFirst(r.status)}</span>
+      <div class="rm-popup-meta">
+        <span><i class="fas fa-user" style="color:${S_COLOR[r.status]};width:14px;text-align:center;"></i>&nbsp;<strong>Reported by:</strong>&nbsp;${esc(r.poster_name)}</span>
+        <span><i class="fas fa-clock" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${date}</span>
+        <span><i class="fas fa-map-location-dot" style="color:#888;width:14px;text-align:center;"></i>&nbsp;${esc(r.location_name)}, ${esc(r.city)}</span>
+        ${r.images&&r.images.length>0?`<span><i class="fas fa-camera" style="color:var(--blue,#1c57b2);width:14px;text-align:center;"></i>&nbsp;${r.images.length} photo${r.images.length>1?'s':''}</span>`:''}
+      </div>
+      <div class="rm-popup-desc">${esc((r.description||'').substring(0,200))}${(r.description||'').length>200?'…':''}</div>
+      <div class="rm-popup-radius"><i class="fas fa-circle-dot" style="color:${S_COLOR[r.status]};"></i>&nbsp;Affected radius: ${r.radius_m||200}m</div>
+      <button class="map-popup-view-btn" onclick="openReportDetail(${r.id})"><i class="fas fa-expand-alt"></i> Full Details</button>
+    </div>`;
+
     // Hover tooltip (shows on mouseover)
-    marker.bindTooltip(html,{direction:'top',offset:[0,-38],opacity:1,className:'rm-popup',sticky:false,permanent:false});
-    // Click popup (same content)
-    marker.bindPopup(html,{maxWidth:300,className:'rm-popup'});
+    marker.bindTooltip(tooltipHtml,{direction:'top',offset:[0,-38],opacity:1,className:'rm-popup',sticky:false,permanent:false});
+    // Click popup (with full details button)
+    marker.bindPopup(clickHtml,{maxWidth:300,className:'rm-popup'});
   });
 
   if(bounds.length) reportsMap.fitBounds(bounds,{padding:[50,50],maxZoom:14});
@@ -1515,6 +1628,121 @@ async function saveProfile(){
   }catch{ showMsg(msg,'error','Network error.'); }
   btn.disabled=false; btn.innerHTML='<i class="fas fa-floppy-disk"></i> Save Changes';
 }
+
+// ════════════════════════════════════════════════════════
+// REPORT DETAIL OVERLAY
+// ════════════════════════════════════════════════════════
+const catLabels = {crime:'Crime',accident:'Accident',flooding:'Flooding',fire:'Fire',health:'Health',infrastructure:'Infrastructure',other:'Other'};
+
+function openReportDetail(id) {
+  const r = allReports.find(x => x.id == id);
+  if (!r) return;
+
+  // Badge + category
+  const badge = document.getElementById('d_badge');
+  badge.textContent = ucFirst(r.status);
+  badge.className = 'detail-badge ' + r.status;
+  document.getElementById('d_cat_tag').innerHTML = `<i class="fas ${catIcons[r.category]||'fa-circle-info'}" style="margin-right:5px;"></i>${catLabels[r.category]||ucFirst(r.category)}`;
+
+  // Title + reporter
+  document.getElementById('d_title').textContent = r.title;
+  const date = new Date(r.created_at).toLocaleDateString('en-PH',{weekday:'short',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('d_reporter').innerHTML = `Posted by <span>${esc(r.poster_name)}</span> &mdash; ${date}`;
+
+  // Photos
+  const photosEl = document.getElementById('d_photos');
+  if (r.images && r.images.length > 0) {
+    photosEl.style.display = 'flex';
+    photosEl.innerHTML = r.images.map((url, i) =>
+      `<div class="detail-photo" onclick="openLightbox('${url.replace(/'/g,"%27")}')">
+        <img src="${esc(url)}" alt="Report photo ${i+1}" loading="lazy" onerror="this.parentElement.style.display='none'">
+        ${r.images.length > 1 ? `<div class="detail-photo-count"><i class="fas fa-camera"></i> ${i+1}/${r.images.length}</div>` : ''}
+      </div>`
+    ).join('');
+  } else {
+    photosEl.style.display = 'none';
+    photosEl.innerHTML = '';
+  }
+
+  // Meta grid
+  const loc = [r.location_name, r.barangay, r.city, r.province].filter(Boolean).join(', ');
+  const metaItems = [
+    {icon:'fa-map-location-dot',color:S_COLOR[r.status],label:'Location',value:loc||r.city||'—'},
+    {icon:'fa-city',color:'#888',label:'City / Municipality',value:r.city+(r.province?', '+r.province:'')},
+    {icon:'fa-thumbs-up',color:'#38a169',label:'Community Votes',value:`👍 ${r.upvotes} &nbsp; 👎 ${r.downvotes}`},
+    {icon:'fa-circle-dot',color:S_COLOR[r.status],label:'Affected Radius',value:`${r.radius_m||200} meters`},
+  ];
+  if (r.barangay) metaItems.splice(1,0,{icon:'fa-map-pin',color:'#888',label:'Barangay',value:r.barangay});
+  document.getElementById('d_meta_grid').innerHTML = metaItems.map(m =>
+    `<div class="detail-meta-item">
+      <div class="detail-meta-label">${m.label}</div>
+      <div class="detail-meta-value"><i class="fas ${m.icon}" style="color:${m.color};"></i>${m.value}</div>
+    </div>`
+  ).join('');
+
+  // Description
+  const descBox = document.getElementById('d_desc_box');
+  if (r.description) {
+    descBox.style.display = '';
+    document.getElementById('d_desc').textContent = r.description;
+  } else {
+    descBox.style.display = 'none';
+  }
+
+  // Footer
+  const upVoted = r.user_vote==='up', downVoted = r.user_vote==='down';
+  const hasPin  = r.latitude && r.longitude;
+  document.getElementById('d_footer').innerHTML = `
+    <div class="detail-vote-wrap">
+      <button class="vote-btn ${upVoted?'voted':''}" onclick="vote(${r.id},'up');refreshDetailVotes(${r.id})"><i class="fas fa-thumbs-up"></i><span id="dd_up_${r.id}">${r.upvotes}</span></button>
+      <button class="vote-btn down ${downVoted?'voted':''}" onclick="vote(${r.id},'down');refreshDetailVotes(${r.id})"><i class="fas fa-thumbs-down"></i><span id="dd_down_${r.id}">${r.downvotes}</span></button>
+    </div>
+    ${hasPin ? `<button class="detail-map-btn" onclick="closeReportDetail();openMiniMap(${r.id})"><i class="fas fa-map-pin"></i> View on Map</button>` : ''}
+    ${r.user_id==MY_USER_ID ? `<button class="vote-btn" onclick="closeReportDetail();deleteReport(${r.id})" style="margin-left:auto;border-color:var(--red);color:var(--red);"><i class="fas fa-trash-can"></i> Delete</button>` : ''}
+  `;
+
+  // Accent color on left border of modal
+  document.getElementById('detailModal').style.borderLeft = `5px solid ${S_COLOR[r.status]||'#ccc'}`;
+
+  document.getElementById('detailOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function refreshDetailVotes(id) {
+  setTimeout(()=>{
+    const r = allReports.find(x=>x.id==id); if(!r) return;
+    const u = document.getElementById('dd_up_'+id), d = document.getElementById('dd_down_'+id);
+    if(u) u.textContent = r.upvotes;
+    if(d) d.textContent = r.downvotes;
+  }, 400);
+}
+
+function closeReportDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function outsideCloseDetail(e) {
+  if (e.target === document.getElementById('detailOverlay')) closeReportDetail();
+}
+
+// ════════════════════════════════════════════════════════
+// LIGHTBOX
+// ════════════════════════════════════════════════════════
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxImg').src = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeLightbox();
+    closeReportDetail();
+  }
+});
 
 // ════════════════════════════════════════════════════════
 // HELPERS
