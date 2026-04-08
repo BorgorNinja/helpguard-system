@@ -1,5 +1,5 @@
 -- ============================================================
--- HelpGuard Migration: Profile Customization & Avatar Color
+-- SenTri Migration: Profile Customization & Avatar Color
 -- Run this ONCE on your existing database.
 -- Safe to run even if column already exists (IF NOT EXISTS).
 -- ============================================================

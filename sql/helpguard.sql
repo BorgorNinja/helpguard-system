@@ -1,4 +1,4 @@
--- HelpGuard Database Schema (with OSM geolocation support)
+-- SenTri Database Schema (with OSM geolocation support)
 -- Run this in phpMyAdmin or MySQL CLI for a fresh install.
 -- For existing installs, run map_migration.sql instead.
 
@@ -6,8 +6,8 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-CREATE DATABASE IF NOT EXISTS `helpguard` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `helpguard`;
+CREATE DATABASE IF NOT EXISTS `sentri` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `sentri`;
 
 -- Users
 CREATE TABLE `users` (
@@ -82,6 +82,6 @@ ALTER TABLE `report_votes`
 
 -- Default admin (password: Admin@1234)
 INSERT INTO `users` (`first_name`, `last_name`, `email`, `password`, `role`)
-VALUES ('HelpGuard', 'Admin', 'admin@helpguard.ph', '$2y$12$wUE6YIEqd5TFkOvFhKHYeOyjjzOfTJxEUxmajftyZW5CQvJXJwzKq', 'admin');
+VALUES ('SenTri', 'Admin', 'admin@sentri.ph', '$2y$12$wUE6YIEqd5TFkOvFhKHYeOyjjzOfTJxEUxmajftyZW5CQvJXJwzKq', 'admin');
 
 COMMIT;

@@ -1,8 +1,8 @@
--- HelpGuard OSM Map Migration
+-- SenTri OSM Map Migration
 -- Run this on your EXISTING database to add geolocation support.
--- If setting up fresh, use helpguard.sql instead (already includes these columns).
+-- If setting up fresh, use sentri.sql instead (already includes these columns).
 
-USE `helpguard`;
+USE `sentri`;
 
 -- Add geolocation columns if they don't exist yet
 ALTER TABLE `reports`

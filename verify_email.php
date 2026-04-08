@@ -56,9 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resen
     $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
     $upd->execute(); $upd->close();
     try {
-        require_once __DIR__ . '/core/HelpGuardMailer.php';
+        require_once __DIR__ . '/core/SenTriMailer.php';
         sendVerificationEmail($resendEmail, $user['first_name'], $newToken);
-    } catch (Throwable $e) { error_log('HelpGuard resend: ' . $e->getMessage()); }
+    } catch (Throwable $e) { error_log('SenTri resend: ' . $e->getMessage()); }
     echo json_encode(['status'=>'success','message'=>'Verification email resent. Please check your inbox.']); exit;
 }
 ?>
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resen
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Email Verification – HelpGuard</title>
+<title>Email Verification – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -115,13 +115,13 @@ p strong{color:#1a1a2e;}
 <div class="card">
   <a href="index.php" class="brand">
     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">HelpGuard</span>
+    <span class="brand-name">SenTri</span>
   </a>
 
   <?php if ($status === 'success'): ?>
     <div class="icon-wrap success"><i class="fas fa-circle-check"></i></div>
     <h1>Email Verified!</h1>
-    <p>Welcome to HelpGuard, <strong><?= $firstName ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
+    <p>Welcome to SenTri, <strong><?= $firstName ?></strong>! Your account is now active. You can sign in and start contributing to your community's safety.</p>
     <a href="login.php" class="btn btn-primary"><i class="fas fa-right-to-bracket"></i> Sign In Now</a>
 
   <?php elseif ($status === 'already'): ?>

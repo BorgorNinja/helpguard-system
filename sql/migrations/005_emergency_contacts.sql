@@ -3,7 +3,7 @@
 -- Implements client requests: LGU, Hospital, Traffic Mgt. Office contacts
 -- with barangay-level routing so reports auto-notify the right office.
 
-USE `helpguard`;
+USE `sentri`;
 
 -- Emergency responder directory (admin-managed)
 CREATE TABLE IF NOT EXISTS `emergency_contacts` (

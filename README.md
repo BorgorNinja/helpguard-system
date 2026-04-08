@@ -1,4 +1,4 @@
-# HelpGuard
+# SenTri
 ### A Community-Driven Web-Based Safety Incident Reporting & Geospatial Monitoring System
 
 ---
@@ -6,7 +6,7 @@
 ## Project Structure
 
 ```
-helpguard-system/
+sentri-system/
 │
 ├── index.php              # Landing / welcome page
 ├── login.php              # User & admin login
@@ -25,7 +25,7 @@ helpguard-system/
 │   └── .htaccess          # Blocks direct web access to config/
 │
 ├── core/
-│   └── HelpGuardMailer.php  # Minimal Gmail SMTP mailer (no Composer)
+│   └── SenTriMailer.php  # Minimal Gmail SMTP mailer (no Composer)
 │
 ├── api/
 │   ├── reports.php        # Reports CRUD, voting, profile, GPS, image upload
@@ -37,7 +37,7 @@ helpguard-system/
 │   └── reports/           # Uploaded incident photos (runtime, git-ignored)
 │
 └── sql/
-    ├── helpguard.sql                          # Full fresh-install schema
+    ├── sentri.sql                          # Full fresh-install schema
     └── migrations/
         ├── 001_map.sql                        # Geo columns (lat/lng/radius)
         ├── 002_email_verification.sql         # Email token table
@@ -59,21 +59,21 @@ helpguard-system/
 ### Steps
 
 1. Copy the project folder into your web server root
-   (e.g. htdocs/helpguard-system/ for XAMPP)
+   (e.g. htdocs/sentri-system/ for XAMPP)
 
 2. Configure config/email.php with your Gmail App Password
    (needed for registration, password reset, and alert emails)
 
 3. Run the installer in your browser:
-   http://localhost/helpguard-system/install.php
-   This creates the helpguard database and all tables automatically.
+   http://localhost/sentri-system/install.php
+   This creates the sentri database and all tables automatically.
 
 4. Delete install.php after successful installation.
 
 5. Access the system:
-   - Community:  http://localhost/helpguard-system/
-   - Admin panel: http://localhost/helpguard-system/admin.php
-   - Default admin: admin@helpguard.ph / Admin@1234
+   - Community:  http://localhost/sentri-system/
+   - Admin panel: http://localhost/sentri-system/admin.php
+   - Default admin: admin@sentri.ph / Admin@1234
    ⚠️  Change the admin password immediately after first login.
 
 ---
@@ -116,7 +116,7 @@ matches the report location.
 | Icons        | Font Awesome 6.5                       |
 | Typography   | Google Fonts — Poppins                 |
 | Auth         | PHP native sessions + bcrypt (cost 12) |
-| Email        | Gmail SMTP via HelpGuardMailer         |
+| Email        | Gmail SMTP via SenTriMailer         |
 | Web Server   | Apache or Nginx + PHP-FPM              |
 
 ---

@@ -1,12 +1,12 @@
 <?php
 /**
- * email_config.php – HelpGuard Email Configuration
+ * email_config.php – SenTri Email Configuration
  *
  * HOW TO SET UP GMAIL APP PASSWORD:
  * 1. Go to your Google Account → Security
  * 2. Enable 2-Step Verification (required for App Passwords)
  * 3. Go to Security → App passwords
- * 4. Select "Mail" and "Other (custom name)" → type "HelpGuard"
+ * 4. Select "Mail" and "Other (custom name)" → type "SenTri"
  * 5. Copy the 16-character password (e.g. "abcd efgh ijkl mnop")
  * 6. Paste it below WITHOUT spaces (e.g. "abcdefghijklmnop")
  *
@@ -25,15 +25,15 @@ define('MAIL_USERNAME',  'jinma80081337@gmail.com');       // ← CHANGE THIS
 define('MAIL_PASSWORD',  'xjbiytxkvplckaon');           // ← CHANGE THIS
 
 // ── Sender name & address shown to recipients ──
-define('MAIL_FROM',      'helpguard-no-reply@gmail.com');       // ← CHANGE THIS
-define('MAIL_FROM_NAME', 'HelpGuard');
+define('MAIL_FROM',      'sentri-no-reply@gmail.com');       // ← CHANGE THIS
+define('MAIL_FROM_NAME', 'SenTri');
 
 // ─── Application URL (no trailing slash) ─────────────────────────────────────
 // Change this to your actual domain in production:
-//   define('APP_URL', 'https://yourdomain.com/helpguard');
+//   define('APP_URL', 'https://yourdomain.com/sentri');
 // !! IMPORTANT: Set this to the EXACT URL of your project root — no trailing slash.
-// If your project is at http://localhost/helpguard-system/ then set:
-//   define('APP_URL', 'http://localhost/helpguard-system');
+// If your project is at http://localhost/sentri-system/ then set:
+//   define('APP_URL', 'http://localhost/sentri-system');
 // If served from webroot:
 //   define('APP_URL', 'http://localhost');
 // Wrong APP_URL = password reset / verification links point to wrong address.

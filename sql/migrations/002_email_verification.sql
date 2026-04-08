@@ -1,10 +1,10 @@
 -- ============================================================
--- HelpGuard Migration: Email Verification & Password Reset
+-- SenTri Migration: Email Verification & Password Reset
 -- Run this ONCE on your existing database.
 -- Safe to run repeatedly (uses IF NOT EXISTS).
 -- ============================================================
 
-USE `helpguard`;
+USE `sentri`;
 
 -- Email verified flag (0 = pending, 1 = verified)
 ALTER TABLE `users`

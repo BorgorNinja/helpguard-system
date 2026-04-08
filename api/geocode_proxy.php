@@ -1,6 +1,6 @@
 <?php
 /**
- * HelpGuard – Nominatim Reverse Geocode Proxy
+ * SenTri – Nominatim Reverse Geocode Proxy
  * Routes Nominatim requests server-side to bypass browser CORS restrictions.
  */
 session_start();
@@ -26,7 +26,7 @@ $url = sprintf(
 $ctx = stream_context_create([
     'http' => [
         'method'  => 'GET',
-        'header'  => "User-Agent: HelpGuard/1.0\r\nAccept-Language: en\r\n",
+        'header'  => "User-Agent: SenTri/1.0\r\nAccept-Language: en\r\n",
         'timeout' => 6,
     ]
 ]);

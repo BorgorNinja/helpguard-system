@@ -42,7 +42,7 @@ $section   = isset($_GET['section']) ? $_GET['section'] : 'feed';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard – HelpGuard</title>
+<title>Dashboard – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -514,7 +514,7 @@ body.dark .detail-map-btn{background:#1f3a5f;color:var(--blue-light);border-colo
   <div class="sidebar-header">
     <div class="brand-logo">
       <div class="brand-icon-s"><i class="fas fa-shield-halved"></i></div>
-      <span class="brand-name-s">HelpGuard</span>
+      <span class="brand-name-s">SenTri</span>
     </div>
     <button class="toggle-btn" onclick="closeSidebar()"><i class="fas fa-xmark"></i></button>
   </div>

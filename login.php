@@ -69,9 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->bind_param("ssi", $newToken, $expiresAt, $user['id']);
             $upd->execute(); $upd->close();
             try {
-                require_once __DIR__ . '/core/HelpGuardMailer.php';
+                require_once __DIR__ . '/core/SenTriMailer.php';
                 sendVerificationEmail($email, $user['first_name'], $newToken);
-            } catch (Throwable $e) { error_log('HelpGuard resend: ' . $e->getMessage()); }
+            } catch (Throwable $e) { error_log('SenTri resend: ' . $e->getMessage()); }
         }
         // Always generic response — don't reveal if email exists
         echo json_encode(['status'=>'success','message'=>'If that account exists and is unverified, a new link has been sent. Please check your inbox.']);
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login – HelpGuard</title>
+<title>Login – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -256,7 +256,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
 <div class="left">
   <a href="index.php" class="brand">
     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">HelpGuard</span>
+    <span class="brand-name">SenTri</span>
   </a>
   <h1>Protect Your <span class="accent">Community.</span><br>Together.</h1>
   <p>Join thousands reporting safety incidents and helping their neighborhoods stay informed and safe.</p>
@@ -297,7 +297,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;position:relative;overflow
   <!-- USER LOGIN -->
   <div class="form-section active" id="userSection">
     <div class="section-title">Welcome Back</div>
-    <p class="section-sub">Sign in to your HelpGuard account</p>
+    <p class="section-sub">Sign in to your SenTri account</p>
     <div id="userMsg" class="msg"></div>
     <form id="userForm" novalidate>
       <input type="hidden" name="mode" value="user">

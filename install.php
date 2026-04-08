@@ -1,9 +1,9 @@
 <?php
 /**
- * HelpGuard – Auto Database Installer
+ * SenTri – Auto Database Installer
  * =====================================
  * Run this file once in your browser to set up the full database schema.
- * Example: http://localhost/helpguard/install.php
+ * Example: http://localhost/sentri/install.php
  *
  * DELETE or rename this file after successful installation.
  */
@@ -12,7 +12,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'helpguard');
+define('DB_NAME', 'sentri');
 
 // ── Simple lock – prevents re-running if DB already fully exists ─────────────
 $steps   = [];   // log of each step
@@ -42,8 +42,8 @@ function run(mysqli $c, string $label, string $sql): bool {
 }
 
 // ── 1. Create database ───────────────────────────────────────────────────────
-run($conn, 'Create database <code>helpguard</code>',
-    "CREATE DATABASE IF NOT EXISTS `helpguard`
+run($conn, 'Create database <code>sentri</code>',
+    "CREATE DATABASE IF NOT EXISTS `sentri`
      DEFAULT CHARACTER SET utf8mb4
      COLLATE utf8mb4_general_ci"
 );
@@ -99,9 +99,9 @@ $userColChecks = [
     'gps_lng'             => "ALTER TABLE `users` ADD COLUMN `gps_lng` DECIMAL(10,7) DEFAULT NULL",
     'phone_number'        => "ALTER TABLE `users` ADD COLUMN `phone_number` VARCHAR(30) DEFAULT NULL AFTER `email`",
 ];
-$conn->query("USE `helpguard`");
+$conn->query("USE `sentri`");
 $existingCols = [];
-$colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='helpguard' AND TABLE_NAME='users'");
+$colRes = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='sentri' AND TABLE_NAME='users'");
 if ($colRes) { while ($r = $colRes->fetch_row()) $existingCols[] = $r[0]; }
 foreach ($userColChecks as $col => $sql) {
     if (!in_array($col, $existingCols)) {
@@ -218,7 +218,7 @@ $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 
 // ── 7. Default admin account ─────────────────────────────────────────────────
 $chk = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
-$adminEmail = 'admin@helpguard.ph';
+$adminEmail = 'admin@sentri.ph';
 $chk->bind_param("s", $adminEmail);
 $chk->execute();
 $chk->store_result();
@@ -227,13 +227,13 @@ if ($chk->num_rows === 0) {
     $chk->close();
     // password: Admin@1234
     $hash  = password_hash('Admin@1234', PASSWORD_BCRYPT, ['cost' => 12]);
-    $fname = 'HelpGuard'; $lname = 'Admin'; $role = 'admin';
+    $fname = 'SenTri'; $lname = 'Admin'; $role = 'admin';
     $ins   = $conn->prepare(
         "INSERT INTO users (first_name, last_name, email, password, role) VALUES (?, ?, ?, ?, ?)"
     );
     $ins->bind_param("sssss", $fname, $lname, $adminEmail, $hash, $role);
     if ($ins->execute()) {
-        $steps[] = ['ok', 'Default admin created — <strong>admin@helpguard.ph</strong> / <strong>Admin@1234</strong>'];
+        $steps[] = ['ok', 'Default admin created — <strong>admin@sentri.ph</strong> / <strong>Admin@1234</strong>'];
     } else {
         $steps[] = ['error', 'Failed to create admin account: ' . htmlspecialchars($conn->error)];
         $success = false;
@@ -241,7 +241,7 @@ if ($chk->num_rows === 0) {
     $ins->close();
 } else {
     $chk->close();
-    $steps[] = ['skip', 'Admin account <code>admin@helpguard.ph</code> already exists — skipped'];
+    $steps[] = ['skip', 'Admin account <code>admin@sentri.ph</code> already exists — skipped'];
 }
 
 // ── 8. report_images table ───────────────────────────────────────────────────
@@ -296,7 +296,7 @@ run($conn, 'Create table <code>contact_notifications</code> (notification log)',
 
 // ── 11. Add phone_number column to users ─────────────────────────────────────
 $colCheck = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA='helpguard' AND TABLE_NAME='users' AND COLUMN_NAME='phone_number'");
+    WHERE TABLE_SCHEMA='sentri' AND TABLE_NAME='users' AND COLUMN_NAME='phone_number'");
 if ($colCheck && $colCheck->num_rows === 0) {
     run($conn, 'Add <code>phone_number</code> column to <code>users</code>',
         "ALTER TABLE `users` ADD COLUMN `phone_number` varchar(30) DEFAULT NULL AFTER `email`");
@@ -327,7 +327,7 @@ function render(array $steps, bool $success): void { ?>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HelpGuard – Database Installer</title>
+<title>SenTri – Database Installer</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -398,7 +398,7 @@ function render(array $steps, bool $success): void { ?>
   <div class="card-header">
     <i class="fas fa-shield-halved"></i>
     <div>
-      <h1>HelpGuard Installer</h1>
+      <h1>SenTri Installer</h1>
       <p>Automatic database setup — <?= date('Y-m-d H:i:s') ?></p>
     </div>
   </div>
@@ -418,14 +418,14 @@ function render(array $steps, bool $success): void { ?>
     <div>
       <h2>Installation Complete!</h2>
       <p>
-        Database <strong>helpguard</strong> is ready.<br>
-        Admin login: <strong>admin@helpguard.ph</strong> / <strong>Admin@1234</strong>
+        Database <strong>sentri</strong> is ready.<br>
+        Admin login: <strong>admin@sentri.ph</strong> / <strong>Admin@1234</strong>
         (change this after first login).
       </p>
     </div>
   </div>
   <div class="actions">
-    <a href="index.php" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Go to HelpGuard</a>
+    <a href="index.php" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Go to SenTri</a>
     <a href="login.php" class="btn btn-primary" style="background:#38a169;"><i class="fas fa-right-to-bracket"></i> Log In</a>
   </div>
   <div class="warning-box">

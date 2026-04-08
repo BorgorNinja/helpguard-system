@@ -26,17 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "UPDATE users SET reset_token=?, reset_token_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?"
         );
         if (!$upd) {
-            error_log('HelpGuard reset prepare error: ' . $conn->error . ' — ensure migration 002 has been run (reset_token column may be missing).');
+            error_log('SenTri reset prepare error: ' . $conn->error . ' — ensure migration 002 has been run (reset_token column may be missing).');
         } else {
             $upd->bind_param("si", $token, $user['id']);
             $upd->execute();
             $upd->close();
         }
         try {
-            require_once __DIR__ . '/core/HelpGuardMailer.php';
+            require_once __DIR__ . '/core/SenTriMailer.php';
             sendPasswordResetEmail($email, $user['first_name'], $token);
         } catch (Throwable $e) {
-            error_log('HelpGuard reset email error: ' . $e->getMessage());
+            error_log('SenTri reset email error: ' . $e->getMessage());
         }
     }
     // Always show the same message (don't reveal if email exists)
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forgot Password – HelpGuard</title>
+<title>Forgot Password – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -93,7 +93,7 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
 <div class="card">
   <a href="index.php" class="brand">
     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">HelpGuard</span>
+    <span class="brand-name">SenTri</span>
   </a>
   <div class="icon-wrap"><i class="fas fa-key"></i></div>
   <h1>Forgot Your Password?</h1>

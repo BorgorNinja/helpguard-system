@@ -7,7 +7,7 @@ if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HelpGuard – Community Safety Network</title>
+<title>SenTri – Community Safety Network</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -62,10 +62,6 @@ nav{background:rgba(255,255,255,0.95);padding:16px 40px;display:flex;align-items
 .cta-primary:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(28,87,178,0.6);}
 .cta-secondary{background:rgba(255,255,255,0.1);color:#fff;padding:15px 34px;border-radius:12px;text-decoration:none;font-weight:600;font-size:1rem;transition:all 0.25s;border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(4px);}
 .cta-secondary:hover{background:rgba(255,255,255,0.18);transform:translateY(-2px);}
-.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:50px;animation:fadeInUp 0.7s 0.75s both;}
-.hero-stat{text-align:center;}
-.hero-stat .num{font-size:2rem;font-weight:800;color:#fff;display:block;letter-spacing:-1px;}
-.hero-stat .lbl{font-size:0.78rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;}
 
 /* ── FEATURES ── */
 .features{padding:90px 60px;background:#fff;}
@@ -118,8 +114,6 @@ footer .brand-f{display:flex;align-items:center;justify-content:center;gap:8px;m
   .hero h1{font-size:2.1rem;}
   .hero p{font-size:0.95rem;}
   .features-grid{grid-template-columns:1fr;}
-  .hero-stats{gap:24px;flex-wrap:wrap;}
-  .hero-stat .num{font-size:1.6rem;}
   .hero-ctas{gap:10px;}
   .cta-primary,.cta-secondary{padding:13px 24px;font-size:0.9rem;}
   footer{padding:24px 20px;}
@@ -131,7 +125,7 @@ footer .brand-f{display:flex;align-items:center;justify-content:center;gap:8px;m
 <nav id="mainNav" style="position:relative;">
   <a href="#" class="nav-brand">
     <div class="nav-brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="nav-brand-name">HelpGuard</span>
+    <span class="nav-brand-name">SenTri</span>
   </a>
   <div class="nav-links">
     <a href="login.php" class="btn-outline">Log In</a>
@@ -157,15 +151,10 @@ footer .brand-f{display:flex;align-items:center;justify-content:center;gap:8px;m
       Community-powered safety network
     </div>
     <h1>Keep Your Community <span class="accent">Safe.</span></h1>
-    <p>Report incidents, view real-time alerts, and help protect your neighborhood with HelpGuard's community-driven safety platform.</p>
+    <p>Report incidents, view real-time alerts, and help protect your neighborhood with SenTri's community-driven safety platform.</p>
     <div class="hero-ctas">
-      <a href="signup.php" class="cta-primary"><i class="fas fa-shield-halved"></i> Join HelpGuard Free</a>
+      <a href="signup.php" class="cta-primary"><i class="fas fa-shield-halved"></i> Join SenTri Free</a>
       <a href="login.php" class="cta-secondary"><i class="fas fa-right-to-bracket"></i> Sign In</a>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat"><span class="num" id="s1">0</span><span class="lbl">Reports Filed</span></div>
-      <div class="hero-stat"><span class="num" id="s2">0</span><span class="lbl">Areas Covered</span></div>
-      <div class="hero-stat"><span class="num" id="s3">0</span><span class="lbl">Community Members</span></div>
     </div>
   </div>
 </section>
@@ -173,7 +162,7 @@ footer .brand-f{display:flex;align-items:center;justify-content:center;gap:8px;m
 <section class="features">
   <div class="section-header">
     <h2>Everything You Need<br>to Stay Safe</h2>
-    <p>HelpGuard combines real-time reporting with community verification to give you accurate local safety information.</p>
+    <p>SenTri combines real-time reporting with community verification to give you accurate local safety information.</p>
   </div>
   <div class="features-grid">
     <div class="feat-card">
@@ -216,7 +205,7 @@ footer .brand-f{display:flex;align-items:center;justify-content:center;gap:8px;m
 </section>
 
 <footer>
-  <div class="brand-f"><i class="fas fa-shield-halved" style="color:#3a8dff;"></i> HelpGuard</div>
+  <div class="brand-f"><i class="fas fa-shield-halved" style="color:#3a8dff;"></i> SenTri</div>
   <p>Community Safety Network &copy; <?= date('Y') ?> · Built to keep communities safe</p>
 </footer>
 
@@ -231,29 +220,6 @@ function toggleMobileNav(){
 document.addEventListener('click',function(e){
   if(!e.target.closest('#mainNav'))document.getElementById('mobileNav').classList.remove('open');
 });
-
-// Animated counter
-function animCount(el,target,suffix){
-  let start=0; const dur=2000; const step=16;
-  const timer=setInterval(()=>{
-    start+=Math.ceil(target/(dur/step));
-    if(start>=target){start=target;clearInterval(timer);}
-    el.textContent=start.toLocaleString()+suffix;
-  },step);
-}
-
-// Intersection observer for counter
-const obs=new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      animCount(document.getElementById('s1'),2400,'+');
-      animCount(document.getElementById('s2'),180,'+');
-      animCount(document.getElementById('s3'),850,'+');
-      obs.disconnect();
-    }
-  });
-},{threshold:0.5});
-obs.observe(document.querySelector('.hero-stats'));
 
 // Scroll-based feature card animations
 const featObs=new IntersectionObserver((entries)=>{

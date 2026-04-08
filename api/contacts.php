@@ -223,8 +223,8 @@ switch ($action) {
         $failed   = 0;
 
         // Load mailer
-        $mailer_available = file_exists(__DIR__ . '/../core/HelpGuardMailer.php');
-        if ($mailer_available) require_once __DIR__ . '/../core/HelpGuardMailer.php';
+        $mailer_available = file_exists(__DIR__ . '/../core/SenTriMailer.php');
+        if ($mailer_available) require_once __DIR__ . '/../core/SenTriMailer.php';
 
         while ($contact = $contacts_res->fetch_assoc()) {
             $cid = (int)$contact['id'];
@@ -239,15 +239,15 @@ switch ($action) {
                     "A <strong>DANGEROUS</strong> incident (<strong>" . htmlspecialchars(strtoupper($r_cat)) . "</strong>) has been reported at: <strong>" . htmlspecialchars($loc_line) . "</strong><br><br>" . nl2br(htmlspecialchars($r_desc)),
                     defined('APP_URL') ? APP_URL . '/admin.php' : '#',
                     'Open Admin Panel',
-                    'This is an automated safety alert from HelpGuard. Please respond as appropriate.'
+                    'This is an automated safety alert from SenTri. Please respond as appropriate.'
                 );
                 try {
-                    $m = new HelpGuardMailer();
-                    // HelpGuardMailer::send(toEmail, toName, subject, htmlBody)
+                    $m = new SenTriMailer();
+                    // SenTriMailer::send(toEmail, toName, subject, htmlBody)
                     $m->send($contact['contact_email'], $contact['name'], $subject, $html_body);
                     $email_sent = true;
                 } catch (Exception $e) {
-                    error_log('HelpGuard contact notify error: ' . $e->getMessage());
+                    error_log('SenTri contact notify error: ' . $e->getMessage());
                 }
             }
 

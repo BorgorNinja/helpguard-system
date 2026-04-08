@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reset Password – HelpGuard</title>
+<title>Reset Password – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -109,7 +109,7 @@ p.sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:24px;}
 <div class="card">
   <a href="index.php" class="brand">
     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">HelpGuard</span>
+    <span class="brand-name">SenTri</span>
   </a>
 
   <?php if ($tokenOk): ?>

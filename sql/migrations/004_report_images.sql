@@ -1,8 +1,8 @@
 -- Migration 004: Report Images
 -- Adds photo attachment support to incident reports.
--- Run AFTER helpguard.sql (fresh install) or on top of any existing install.
+-- Run AFTER sentri.sql (fresh install) or on top of any existing install.
 
-USE `helpguard`;
+USE `sentri`;
 
 CREATE TABLE IF NOT EXISTS `report_images` (
   `id`          int(11)       NOT NULL AUTO_INCREMENT,

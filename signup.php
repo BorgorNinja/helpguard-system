@@ -74,10 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $emailSent = false;
     try {
-        require_once __DIR__ . '/core/HelpGuardMailer.php';
+        require_once __DIR__ . '/core/SenTriMailer.php';
         $emailSent = sendVerificationEmail($email, $first, $token);
     } catch (Throwable $e) {
-        error_log('HelpGuard email error: ' . $e->getMessage());
+        error_log('SenTri email error: ' . $e->getMessage());
     }
 
     $message = $emailSent
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up – HelpGuard</title>
+<title>Sign Up – SenTri</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -184,7 +184,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;overflow:hidden;}
 <div class="left">
   <a href="index.php" class="brand">
     <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
-    <span class="brand-name">HelpGuard</span>
+    <span class="brand-name">SenTri</span>
   </a>
   <h1>Join the <span class="accent">Safety</span><br>Network</h1>
   <p>Sign up in seconds and start contributing to a safer community for everyone around you.</p>
@@ -198,7 +198,7 @@ body{background:#0a0f1e;min-height:100vh;display:flex;overflow:hidden;}
 <div class="right">
   <a href="index.php" class="back"><i class="fas fa-arrow-left"></i> Back to Home</a>
   <div class="section-title">Create Account</div>
-  <p class="section-sub">Join HelpGuard and make your community safer</p>
+  <p class="section-sub">Join SenTri and make your community safer</p>
 
   <div class="email-notice">
     <i class="fas fa-envelope-circle-check"></i>

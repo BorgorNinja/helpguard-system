@@ -1,17 +1,17 @@
 <?php
-// db_connect.php – HelpGuard database connection
+// db_connect.php – SenTri database connection
 // Change credentials to match your MySQL setup
 
 $servername = "localhost";
 $db_user    = "root";       // change if needed
 $db_pass    = "";           // change if you set one
-$dbname     = "helpguard";
+$dbname     = "sentri";
 
 $conn = new mysqli($servername, $db_user, $db_pass, $dbname);
 
 if ($conn->connect_error) {
     // Never expose raw MySQL errors in production
-    error_log("HelpGuard DB Error: " . $conn->connect_error);
+    error_log("SenTri DB Error: " . $conn->connect_error);
     die(json_encode(['status' => 'error', 'message' => 'Database connection failed.']));
 }
 
