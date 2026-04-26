@@ -171,8 +171,9 @@ switch ($action) {
                     if (!in_array($mime, $allowed_mime))                  continue;
                     if ($size > $max_size)                                 continue;
 
-                    $ext      = pathinfo($orig, PATHINFO_EXTENSION) ?: 'jpg';
-                    $filename = 'report_' . $new_id . '_' . uniqid() . '.' . strtolower($ext);
+                    $mime_ext_map = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif'];
+                    $ext      = $mime_ext_map[$mime] ?? 'jpg';
+                    $filename = 'report_' . $new_id . '_' . uniqid() . '.' . $ext;
                     $dest     = $upload_dir . $filename;
 
                     if (move_uploaded_file($tmp, $dest)) {
@@ -183,8 +184,6 @@ switch ($action) {
                         $uploaded_images[] = $filename;
                     }
                 }
-            } else {
-                $ins->close();
             }
 
             echo json_encode([

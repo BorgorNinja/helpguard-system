@@ -186,8 +186,9 @@ switch ($action) {
         $d->close();
         break;
 
-    // ── INTERNAL: notify contacts for a report (called after post_report) ──
+    // ── INTERNAL: notify contacts for a report (admin only) ───────────────
     case 'notify_report':
+        if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
         ensureContactsTables($conn);
 
@@ -276,15 +277,19 @@ switch ($action) {
         if ($role !== 'admin') { echo json_encode(['status'=>'error','message'=>'Admin required.']); exit; }
         $report_id = (int)($_GET['report_id'] ?? 0);
         if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid ID.']); exit; }
-        $res = $conn->query("
+        $stmt = $conn->prepare("
             SELECT cn.id, ec.name, ec.type, ec.contact_email, cn.method, cn.status, cn.sent_at
             FROM contact_notifications cn
             JOIN emergency_contacts ec ON ec.id = cn.contact_id
-            WHERE cn.report_id = $report_id
+            WHERE cn.report_id = ?
             ORDER BY cn.sent_at DESC
         ");
+        $stmt->bind_param('i', $report_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
         $logs = [];
         while ($row = $res->fetch_assoc()) { $row['id'] = (int)$row['id']; $logs[] = $row; }
+        $stmt->close();
         echo json_encode(['status'=>'success','notifications'=>$logs]);
         break;
 
