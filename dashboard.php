@@ -286,7 +286,7 @@ body.dark .gps-chip.error{background:#3d1f1f;}
 .loading i{animation:spin 1s linear infinite;margin-right:8px;}
 
 /* ─── MAP VIEW (feed) ─── */
-#mapView{display:none;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);animation:scaleIn 0.3s ease;margin-bottom:28px;}
+#mapView{display:none;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);animation:scaleIn 0.3s ease;margin-bottom:28px;isolation:isolate;}
 #mapView.show{display:block;}
 #mainMap{height:560px;width:100%;background:#dde8f0;}
 .map-legend{background:var(--card);padding:14px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-top:1px solid var(--card-border);transition:background 0.3s;}
@@ -299,7 +299,7 @@ body.dark .legend-item{color:#8b949e;}
 /* ─── REPORTS MAP SECTION ─── */
 #reportsMapSection{display:none;}
 #reportsMapSection.show{display:block;}
-.rmap-wrap{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);animation:scaleIn 0.3s ease;transition:background 0.3s;}
+.rmap-wrap{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);animation:scaleIn 0.3s ease;transition:background 0.3s;isolation:isolate;}
 .rmap-header{padding:18px 24px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:14px;}
 .rmap-header-text h2{font-size:1.05rem;font-weight:700;color:var(--text);}
 .rmap-header-text p{font-size:0.82rem;color:var(--muted);margin-top:2px;}
