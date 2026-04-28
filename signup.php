@@ -46,8 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!in_array('responder_type', $existingCols))
         $conn->query("ALTER TABLE users ADD COLUMN responder_type VARCHAR(30) DEFAULT NULL");
-    // Expand role enum if needed (safe to run repeatedly — MySQL ignores if already set)
-    $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
+    // Only expand enum if new roles aren't already present
+    $enumRes = $conn->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users' AND COLUMN_NAME='role'");
+    if ($enumRes) {
+        $enumRow = $enumRes->fetch_row();
+        if ($enumRow && strpos($enumRow[0], 'first_responder') === false) {
+            $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
+        }
+    }
     // ─────────────────────────────────────────────────────────────────────────
 
     $first    = trim($_POST['first_name']    ?? '');
@@ -339,7 +345,7 @@ document.getElementById('regForm').addEventListener('submit',async e=>{
       showMsg('success',data.message);
       setTimeout(()=>window.location.href=data.redirect,1800);
     }else{showMsg('error',data.message||'Registration failed.');btn.disabled=false;btn.innerHTML=orig;}
-  }catch{showMsg('error','Connection error.');btn.disabled=false;btn.innerHTML=orig;}
+  }catch(err){showMsg('error','Error: '+err.message);btn.disabled=false;btn.innerHTML=orig;}
 });
 function showMsg(type,text){const el=document.getElementById('regMsg');el.className='msg '+type;el.textContent=text;el.style.display='block';}
 </script>

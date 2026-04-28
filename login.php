@@ -32,11 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS barangay_name VARCHAR(150) DEFAULT NULL",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS municipality VARCHAR(150) DEFAULT NULL",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS responder_type VARCHAR(30) DEFAULT NULL",
-        "ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'",
     ];
     foreach ($migrations as $q) $conn->query($q);
     if (!in_array('email_verified',$cols)) $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
     if (!in_array('is_approved',$cols)) { $conn->query("UPDATE users SET is_approved=1 WHERE role='community' OR role='user' OR role='admin'"); }
+    // Only expand enum when needed
+    $enumRes = $conn->query("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$db' AND TABLE_NAME='users' AND COLUMN_NAME='role'");
+    if ($enumRes) { $enumRow=$enumRes->fetch_row(); if($enumRow && strpos($enumRow[0],'first_responder')===false) $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'"); }
 
     if ($portal === 'resend') {
         $stmt = $conn->prepare("SELECT id,first_name,email_verified FROM users WHERE email=? LIMIT 1");
