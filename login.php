@@ -66,14 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $s='Failed'; $lg->bind_param("issss",$id,$email,$ip,$device,$s); $lg->execute(); $lg->close();
                 echo json_encode(['status'=>'error','message'=>'Please verify your email before signing in.','unverified'=>true,'email'=>$email]); exit;
             }
-            $allowed = match($portal) {
-                'community'      => ['community','user'],
-                'barangay'       => ['barangay'],
-                'lgu'            => ['lgu'],
-                'first_responder'=> ['first_responder'],
-                'admin'          => ['admin'],
-                default          => ['community','user'],
-            };
+            switch($portal) {
+                case 'barangay':        $allowed=['barangay']; break;
+                case 'lgu':             $allowed=['lgu']; break;
+                case 'first_responder': $allowed=['first_responder']; break;
+                case 'admin':           $allowed=['admin']; break;
+                default:                $allowed=['community','user']; break;
+            }
             if (!in_array($role,$allowed,true)) {
                 echo json_encode(['status'=>'error','message'=>'This account does not have access to the selected portal. Choose the correct portal for your role.']); exit;
             }

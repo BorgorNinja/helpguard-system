@@ -174,7 +174,7 @@ body{background:var(--bg);display:flex;min-height:100vh;color:var(--text);}
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:#fffbeb;color:#d97706;"><i class="fas fa-circle-exclamation"></i></div>
-        <div><div class="stat-num"><?= count(array_filter($active,fn($r)=>$r['status']==='caution')) ?></div><div class="stat-lbl">Caution</div></div>
+        <div><div class="stat-num"><?php $caution_count=0; foreach($active as $_r){ if($_r['status']==='caution') $caution_count++; } echo $caution_count; ?></div><div class="stat-lbl">Caution</div></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:#f0fdf4;color:#166534;"><i class="fas fa-clipboard-check"></i></div>
