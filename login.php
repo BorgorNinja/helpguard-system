@@ -247,7 +247,7 @@ const portals={
   barangay:       {title:'Barangay Official Sign In',    sub:'Barangay operations and incident management portal',      icon:'fa-house-flag',    bg:'#f0fdf4',  color:'#166534',  btn:'linear-gradient(135deg,#16a34a,#166534)',   label:'Sign In to Barangay Portal',    official:true},
   lgu:            {title:'LGU Official Sign In',         sub:'City and municipal government incident oversight portal', icon:'fa-landmark',      bg:'#f0f7ff',  color:'#0a3d62',  btn:'linear-gradient(135deg,#1a5276,#062444)',   label:'Sign In to LGU Portal',         official:true},
   first_responder:{title:'First Responder Sign In',      sub:'Emergency dispatch and active incident response portal', icon:'fa-truck-medical', bg:'#fef2f2',  color:'#b91c1c',  btn:'linear-gradient(135deg,#ef4444,#b91c1c)',   label:'Sign In to Responder Portal',   official:true},
-  admin:          {title:'System Administrator Sign In', sub:'Restricted: SenTri system administration only',         icon:'fa-gear',          bg:'#f5f3ff',  color:'#5b21b6',  btn:'linear-gradient(135deg,#7c3aed,#5b21b6)',   label:'Access Admin Panel',            official:true},
+  admin:          {title:'System Administrator Sign In', sub:'Default credentials: username <b>admin</b> / password <b>admin</b>',         icon:'fa-gear',          bg:'#f5f3ff',  color:'#5b21b6',  btn:'linear-gradient(135deg,#7c3aed,#5b21b6)',   label:'Access Admin Panel',            official:true},
 };
 let current='community';
 function selectPortal(key,el){
@@ -259,7 +259,7 @@ function selectPortal(key,el){
   pi.style.cssText=`background:${p.bg};color:${p.color};`;
   pi.innerHTML=`<i class="fas ${p.icon}"></i>`;
   document.getElementById('phTitle').textContent=p.title;
-  document.getElementById('phSub').textContent=p.sub;
+  document.getElementById('phSub').innerHTML=p.sub;
   document.getElementById('portalField').value=key;
   const btn=document.getElementById('loginBtn');
   btn.style.background=p.btn;
@@ -267,6 +267,8 @@ function selectPortal(key,el){
   const on=document.getElementById('officialNotice');
   on.style.display=p.official?'flex':'none';
   document.getElementById('signupRow').style.display=(key==='community')?'block':'none';
+  if(key==='admin'){ document.getElementById('emailField').value='admin'; document.getElementById('pwField').value='admin'; }
+  else { document.getElementById('emailField').value=''; document.getElementById('pwField').value=''; }
   document.getElementById('loginMsg').style.display='none';
   document.getElementById('resendBox').style.display='none';
 }
