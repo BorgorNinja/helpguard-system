@@ -576,21 +576,41 @@ function renderUsers(){
   body.innerHTML=list.map(u=>{
     const date=new Date(u.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'});
     const initials=(u.first_name[0]||'?').toUpperCase();
-    return `<tr id="urow_${u.id}">
+    const isPending = u.is_approved===0 && u.role!=='community' && u.role!=='admin';
+    const roleLabel = u.role.replace('_',' ');
+    const orgInfo = u.org_name ? `<div style="font-size:0.72rem;color:#888;">${esc(u.org_name)}</div>` : '';
+    return `<tr id="urow_${u.id}" ${isPending?'style="background:#fffbeb;"':''}>
       <td style="color:#aaa;">${u.id}</td>
       <td><div style="display:flex;align-items:center;gap:10px;">
         <div class="user-avatar-sm ${u.role==='admin'?'admin-av':''}">${initials}</div>
-        <div><div style="font-weight:600;">${esc(u.first_name)} ${esc(u.last_name)}</div></div>
+        <div><div style="font-weight:600;">${esc(u.first_name)} ${esc(u.last_name)}</div>${orgInfo}${isPending?'<span style="font-size:0.68rem;background:#fef9ec;color:#92400e;border:1px solid #fde68a;padding:1px 7px;border-radius:10px;font-weight:700;margin-top:3px;display:inline-block;">PENDING APPROVAL</span>':''}</div>
       </div></td>
       <td style="color:var(--muted);">${esc(u.email)}</td>
-      <td><span class="badge ${u.role}">${u.role}</span></td>
+      <td><span class="badge ${u.role}">${roleLabel}</span></td>
       <td style="color:#888;font-size:0.78rem;">${date}</td>
       <td style="text-align:center;">${u.report_count}</td>
-      <td>
-        ${u.role!=='admin' ? `<button class="act-btn del" onclick="deleteUser(${u.id},'${esc(u.first_name)} ${esc(u.last_name)}')"><i class="fas fa-trash-can"></i> Remove</button>` : '<span style="color:#aaa;font-size:0.78rem;">Protected</span>'}
-      </td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${isPending ? `<button class="act-btn" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;font-size:0.75rem;" onclick="approveUser(${u.id})"><i class="fas fa-check"></i> Approve</button><button class="act-btn del" style="font-size:0.75rem;" onclick="rejectUser(${u.id},'${esc(u.first_name)}')"><i class="fas fa-xmark"></i> Reject</button>` : ''}
+        ${u.role!=='admin'&&!isPending ? `<button class="act-btn del" onclick="deleteUser(${u.id},'${esc(u.first_name)} ${esc(u.last_name)}')"><i class="fas fa-trash-can"></i> Remove</button>` : ''}
+        ${u.role==='admin' ? '<span style="color:#aaa;font-size:0.78rem;">Protected</span>' : ''}
+      </div></td>
     </tr>`;
   }).join('');
+}
+async function approveUser(uid){
+  const fd=new FormData(); fd.append('action','admin_approve_user'); fd.append('user_id',uid);
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
+  const data=await res.json();
+  if(data.status==='success'){ const u=allUsers.find(x=>x.id==uid); if(u){u.is_approved=1;} renderUsers(); }
+  else alert(data.message||'Failed.');
+}
+async function rejectUser(uid, name){
+  if(!confirm(`Reject and remove account for "${name}"? This cannot be undone.`)) return;
+  const fd=new FormData(); fd.append('action','admin_reject_user'); fd.append('user_id',uid);
+  const res=await fetch('api/reports.php',{method:'POST',body:fd});
+  const data=await res.json();
+  if(data.status==='success'){ allUsers=allUsers.filter(u=>u.id!=uid); renderUsers(); }
+  else alert(data.message||'Failed.');
 }
 async function deleteUser(uid, name){
   if(!confirm(`Remove user "${name}"?\n\nThis will delete their account and all their reports. This cannot be undone.`)) return;
@@ -600,7 +620,6 @@ async function deleteUser(uid, name){
   if(data.status==='success'){
     allUsers=allUsers.filter(u=>u.id!=uid);
     renderUsers();
-    // update stat
     document.querySelector('.stat-num').textContent=allUsers.length;
   } else alert(data.message||'Failed to delete user.');
 }

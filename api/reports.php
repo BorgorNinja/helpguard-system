@@ -259,10 +259,28 @@ switch ($action) {
 
     case 'admin_get_users':
         if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
-        $sql="SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at, COUNT(r.id) AS report_count FROM users u LEFT JOIN reports r ON r.user_id=u.id GROUP BY u.id ORDER BY u.created_at DESC";
+        $sql="SELECT u.id,u.first_name,u.last_name,u.email,u.role,u.org_name,u.position,u.barangay_name,u.municipality,u.is_approved,u.created_at,COUNT(r.id) AS report_count FROM users u LEFT JOIN reports r ON r.user_id=u.id GROUP BY u.id ORDER BY u.is_approved ASC, u.created_at DESC";
         $res=$conn->query($sql); $users=[];
-        while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$row['report_count']=(int)$row['report_count'];$users[]=$row;}
+        while($row=$res->fetch_assoc()){$row['id']=(int)$row['id'];$row['report_count']=(int)$row['report_count'];$row['is_approved']=(int)$row['is_approved'];$users[]=$row;}
         echo json_encode(['status'=>'success','users'=>$users]);
+        break;
+
+    case 'admin_approve_user':
+        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+        $target=(int)($_POST['user_id']??0);
+        if(!$target){echo json_encode(['status'=>'error','message'=>'Invalid user ID.']);exit;}
+        $s=$conn->prepare("UPDATE users SET is_approved=1 WHERE id=?");
+        $s->bind_param("i",$target); $s->execute(); $s->close();
+        echo json_encode(['status'=>'success','message'=>'Account approved.']);
+        break;
+
+    case 'admin_reject_user':
+        if($role!=='admin'){echo json_encode(['status'=>'error','message'=>'Admin required.']);exit;}
+        $target=(int)($_POST['user_id']??0);
+        if(!$target||$target===$user_id){echo json_encode(['status'=>'error','message'=>'Invalid.']);exit;}
+        $s=$conn->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
+        $s->bind_param("i",$target); $s->execute(); $s->close();
+        echo json_encode(['status'=>'success','message'=>'Account rejected and removed.']);
         break;
 
     case 'admin_delete_user':
@@ -395,6 +413,34 @@ switch ($action) {
             }
         }
         echo json_encode(['status'=>'success','images'=>$images]);
+        break;
+
+    case 'assign_report':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+        if (!in_array($role, ['first_responder','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+        $report_id = (int)($_POST['report_id'] ?? 0);
+        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+        $stmt = $conn->prepare("UPDATE reports SET assigned_to=? WHERE id=? AND assigned_to IS NULL");
+        $stmt->bind_param("ii", $user_id, $report_id);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(['status'=>'success','message'=>'Report assigned to you.']);
+        } else {
+            echo json_encode(['status'=>'error','message'=>'Report already assigned or not found.']);
+        }
+        $stmt->close();
+        break;
+
+    case 'resolve_report':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['status'=>'error','message'=>'POST required.']); exit; }
+        if (!in_array($role, ['first_responder','barangay','lgu','admin'], true)) { echo json_encode(['status'=>'error','message'=>'Unauthorized.']); exit; }
+        $report_id = (int)($_POST['report_id'] ?? 0);
+        if (!$report_id) { echo json_encode(['status'=>'error','message'=>'Invalid report ID.']); exit; }
+        $stmt = $conn->prepare("UPDATE reports SET status='safe', resolved_at=NOW() WHERE id=?");
+        $stmt->bind_param("i", $report_id);
+        $stmt->execute();
+        echo json_encode(['status'=>'success','message'=>'Report marked as resolved.']);
+        $stmt->close();
         break;
 
     default:
