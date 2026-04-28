@@ -1,10 +1,15 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ob_start();
 session_start();
 if (isset($_SESSION['user_id'])) { header("Location: dashboard.php"); exit; }
 require __DIR__ . '/config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    ob_clean();
     header('Content-Type: application/json');
+    try {
 
     // ── Auto-migrate: add email verification columns if they don't exist yet ──
     // This means email_verification.sql doesn't need to be run manually.
@@ -35,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array('org_name', $existingCols))
         $conn->query("ALTER TABLE users ADD COLUMN org_name VARCHAR(255) DEFAULT NULL");
     if (!in_array('position', $existingCols))
-        $conn->query("ALTER TABLE users ADD COLUMN position VARCHAR(150) DEFAULT NULL");
+        $conn->query("ALTER TABLE users ADD COLUMN `position` VARCHAR(150) DEFAULT NULL");
     if (!in_array('barangay_name', $existingCols))
         $conn->query("ALTER TABLE users ADD COLUMN barangay_name VARCHAR(150) DEFAULT NULL");
     if (!in_array('municipality', $existingCols))
@@ -100,10 +105,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hash       = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
 
     $ins = $conn->prepare(
-        "INSERT INTO users (first_name,last_name,email,password,role,phone_number,org_name,position,barangay_name,municipality,responder_type,is_approved,email_verified,verification_token,token_expires_at)
+        "INSERT INTO users (first_name,last_name,email,password,role,phone_number,org_name,`position`,barangay_name,municipality,responder_type,is_approved,email_verified,verification_token,token_expires_at)
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)"
     );
-    if (!$ins) { echo json_encode(['status'=>'error','message'=>'Database error: '.$conn->error]); exit; }
+    if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit; }
     $ins->bind_param("sssssssssssiiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at);
     if (!$ins->execute()) {
         echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
@@ -127,6 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?verify_sent=1']);
     exit;
+    } catch (Throwable $e) {
+        ob_clean();
+        error_log('SenTri signup error: ' . $e->getMessage());
+        echo json_encode(['status'=>'error','message'=>'Server error: ' . $e->getMessage()]);
+        exit;
+    }
 }
 ?>
 <!DOCTYPE html>
