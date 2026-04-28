@@ -26,6 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(64) DEFAULT NULL",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires DATETIME DEFAULT NULL",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved TINYINT(1) NOT NULL DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(30) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS org_name VARCHAR(255) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS position VARCHAR(150) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS barangay_name VARCHAR(150) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS municipality VARCHAR(150) DEFAULT NULL",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS responder_type VARCHAR(30) DEFAULT NULL",
+        "ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'",
     ];
     foreach ($migrations as $q) $conn->query($q);
     if (!in_array('email_verified',$cols)) $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");

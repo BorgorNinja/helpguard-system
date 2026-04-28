@@ -28,6 +28,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Mark any existing users (registered before this migration) as already verified
     if (!in_array('email_verified', $existingCols))
         $conn->query("UPDATE users SET email_verified=1 WHERE created_at < NOW()");
+
+    // Migration 006: role expansion and affiliation columns
+    if (!in_array('phone_number', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN phone_number VARCHAR(30) DEFAULT NULL AFTER email");
+    if (!in_array('org_name', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN org_name VARCHAR(255) DEFAULT NULL");
+    if (!in_array('position', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN position VARCHAR(150) DEFAULT NULL");
+    if (!in_array('barangay_name', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN barangay_name VARCHAR(150) DEFAULT NULL");
+    if (!in_array('municipality', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN municipality VARCHAR(150) DEFAULT NULL");
+    if (!in_array('is_approved', $existingCols)) {
+        $conn->query("ALTER TABLE users ADD COLUMN is_approved TINYINT(1) NOT NULL DEFAULT 0");
+        $conn->query("UPDATE users SET is_approved=1 WHERE role IN('user','community','admin')");
+    }
+    if (!in_array('responder_type', $existingCols))
+        $conn->query("ALTER TABLE users ADD COLUMN responder_type VARCHAR(30) DEFAULT NULL");
+    // Expand role enum if needed (safe to run repeatedly — MySQL ignores if already set)
+    $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
     // ─────────────────────────────────────────────────────────────────────────
 
     $first    = trim($_POST['first_name']    ?? '');
