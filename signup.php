@@ -59,6 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->query("ALTER TABLE users MODIFY COLUMN role ENUM('user','community','barangay','lgu','first_responder','admin') NOT NULL DEFAULT 'community'");
         }
     }
+    // Clear any pending results/errors left by DDL statements
+    while ($conn->more_results()) $conn->next_result();
+    $conn->query("SELECT 1"); // flush connection state
     // ─────────────────────────────────────────────────────────────────────────
 
     $first    = trim($_POST['first_name']    ?? '');
@@ -109,7 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)"
     );
     if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit; }
-    $ins->bind_param("sssssssssssiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at);
+    if (!$ins->bind_param("sssssssssssiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at)) {
+        echo json_encode(['status'=>'error','message'=>'Bind error: '.$ins->error]); exit;
+    }
     if (!$ins->execute()) {
         echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
     }
