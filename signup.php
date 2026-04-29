@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)"
     );
     if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit; }
-    $ins->bind_param("sssssssssssiiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at);
+    $ins->bind_param("sssssssssssiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at);
     if (!$ins->execute()) {
         echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
     }
