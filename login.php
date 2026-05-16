@@ -71,7 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_result($id,$fn,$ln,$hash,$role,$verified,$approved);
         $stmt->fetch();
         if (password_verify($password,$hash)) {
-            if (!$verified) {
+            // Email verification only required for community accounts.
+            // Official roles (barangay, lgu, first_responder) use admin approval instead.
+            $community_roles = ['community', 'user'];
+            if (!$verified && in_array($role, $community_roles, true)) {
                 $stmt->close();
                 $lg=$conn->prepare("INSERT INTO login_logs(user_id,email,ip_address,device,status)VALUES(?,?,?,?,?)");
                 $s='Failed'; $lg->bind_param("issss",$id,$email,$ip,$device,$s); $lg->execute(); $lg->close();
@@ -234,7 +237,7 @@ body{min-height:100vh;background:var(--navy-dark);display:flex;flex-direction:co
       <div class="ph-icon" id="phIcon" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-users"></i></div>
       <div><div class="ph-title" id="phTitle">Community Member Sign In</div><div class="ph-sub" id="phSub">Access the citizen incident reporting dashboard</div></div>
     </div>
-    <div class="official-notice" id="officialNotice"><i class="fas fa-triangle-exclamation"></i><span>This portal is restricted to verified and approved official accounts only. Unauthorized access attempts are logged. To register as an official, <a href="signup.php" style="color:#92400e;font-weight:700;">create an account</a> and await administrator approval.</span></div>
+    <div class="official-notice" id="officialNotice"><i class="fas fa-triangle-exclamation"></i><span>This portal requires an approved official account. No email verification is needed — your account is activated directly by the system administrator. To register, <a href="signup.php" style="color:#92400e;font-weight:700;">create an account</a> and await administrator approval.</span></div>
     <div id="loginMsg" class="msg"></div>
     <form id="loginForm" novalidate>
       <input type="hidden" name="portal" id="portalField" value="community">

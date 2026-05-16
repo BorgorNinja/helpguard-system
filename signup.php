@@ -107,18 +107,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
     $hash       = password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12]);
 
+    // Official roles (barangay, lgu, first_responder) skip email verification —
+    // admin approval is their gate. Community accounts still require email verify.
+    $official_roles = ['barangay', 'lgu', 'first_responder'];
+    $is_official    = in_array($role_req, $official_roles, true);
+    $email_verified = $is_official ? 1 : 0;
+    $ins_token      = $is_official ? null : $token;
+    $ins_expires    = $is_official ? null : $expires_at;
+
     $ins = $conn->prepare(
         "INSERT INTO users (first_name,last_name,email,password,role,phone_number,org_name,`position`,barangay_name,municipality,responder_type,is_approved,email_verified,verification_token,token_expires_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)"
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
     if (!$ins) { echo json_encode(['status'=>'error','message'=>'Prepare error: '.$conn->error]); exit; }
-    if (!$ins->bind_param("sssssssssssiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$token,$expires_at)) {
+    if (!$ins->bind_param("ssssssssssssiiss", $first,$last,$email,$hash,$role_req,$phone,$org_name,$position,$brgy,$muni,$rtype,$is_approved,$email_verified,$ins_token,$ins_expires)) {
         echo json_encode(['status'=>'error','message'=>'Bind error: '.$ins->error]); exit;
     }
     if (!$ins->execute()) {
         echo json_encode(['status'=>'error','message'=>'Registration failed: '.$ins->error]); exit;
     }
     $ins->close();
+
+    if ($is_official) {
+        $message = 'Account created! Your account is now pending administrator approval. You will be notified once approved.';
+        echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?pending=1']);
+        exit;
+    }
 
     $emailSent = false;
     try {
@@ -131,9 +145,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $emailSent
         ? 'Account created! Please check your inbox and verify your email before signing in.'
         : 'Account created! We had trouble sending the verification email — use the "Resend" option on the login page.';
-    if ($is_approved === 0) {
-        $message .= ' As an official account, you will also need administrator approval before you can sign in.';
-    }
 
     echo json_encode(['status'=>'success','message'=>$message,'redirect'=>'login.php?verify_sent=1']);
     exit;
@@ -258,7 +269,7 @@ body{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
     <div id="regMsg" class="msg"></div>
     <div class="approval-notice" id="approvalNotice">
       <i class="fas fa-clock"></i>
-      <span>Official accounts are subject to administrator verification and approval before access is granted. You will be notified by email once approved.</span>
+      <span>Official accounts do not require email verification. Your account will be reviewed and activated by the system administrator. You will be notified once your account is approved.</span>
     </div>
 
     <form id="regForm" novalidate>
