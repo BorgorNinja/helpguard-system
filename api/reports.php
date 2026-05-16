@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ob_start();
 session_start();
 header('Content-Type: application/json');
 
@@ -426,7 +429,15 @@ switch ($action) {
         if ($stmt->affected_rows > 0) {
             echo json_encode(['status'=>'success','message'=>'Report assigned to you.']);
         } else {
-            echo json_encode(['status'=>'error','message'=>'Report already assigned or not found.']);
+            // Check if it was already assigned to this user vs someone else
+            $chk = $conn->prepare("SELECT assigned_to FROM reports WHERE id=?");
+            $chk->bind_param("i",$report_id); $chk->execute();
+            $chk->bind_result($cur_assigned); $chk->fetch(); $chk->close();
+            if((int)$cur_assigned === $user_id) {
+                echo json_encode(['status'=>'error','message'=>'You have already assigned this report to yourself.']);
+            } else {
+                echo json_encode(['status'=>'error','message'=>'Report not found or already assigned to another responder.']);
+            }
         }
         $stmt->close();
         break;
@@ -447,4 +458,4 @@ switch ($action) {
         echo json_encode(['status'=>'error','message'=>'Unknown action.']);
 }
 $conn->close();
-?>
+ob_end_flush();

@@ -17,15 +17,23 @@ $org  = $prof['org_name']      ?? 'Barangay Office';
 $pos  = $prof['position']      ?? 'Barangay Official';
 $juri = $brgy ?: ($city ?: 'All Areas');
 
-function cq($conn,$sql,$t='',$p=[]){$s=$conn->prepare($sql);if($t)$s->bind_param($t,...$p);$s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;}
+function cq($conn,$sql,$types='',$params=[]){
+    $s=$conn->prepare($sql);
+    if($types && count($params)){
+        $refs=[];
+        foreach($params as &$v) $refs[]=&$v;
+        array_unshift($refs,$types);
+        call_user_func_array([$s,'bind_param'],$refs);
+    }
+    $s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;
+}
 
 // Stats — filter to barangay if set
 $filter_sql  = $brgy ? "AND barangay=?" : "";
-$filter_args = $brgy ? ["s", $brgy] : [];
-$total   = cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0 $filter_sql",...$filter_args);
-$danger  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0 $filter_sql",...$filter_args);
-$caution = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0 $filter_sql",...$filter_args);
-$safe    = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0 $filter_sql",...$filter_args);
+$total   = cq($conn,"SELECT COUNT(*) FROM reports WHERE is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
+$danger  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
+$caution = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
+$safe    = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='safe' AND is_archived=0 $filter_sql", $brgy?"s":"", $brgy?[$brgy]:[]);
 
 $cat_icons = ['crime'=>'fa-user-slash','accident'=>'fa-car-burst','flooding'=>'fa-water','fire'=>'fa-fire','health'=>'fa-heart-pulse','infrastructure'=>'fa-road-barrier','other'=>'fa-circle-exclamation'];
 $type_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
@@ -362,6 +370,16 @@ tr:hover td{background:#fafafa;}
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');document.body.style.overflow='hidden';}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');document.body.style.overflow='';}
 function closeModal(){document.getElementById('reportModal').classList.remove('show');}
+
+function quickResolve(id,btn){
+  if(!confirm('Mark this report as resolved?'))return;
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
+  fetch('../api/reports.php',{method:'POST',body:fd})
+    .then(function(r){return r.json();})
+    .then(function(data){if(data.status==='success')location.reload();else{alert(data.message);btn.disabled=false;btn.innerHTML='<i class="fas fa-check"></i>';}})
+    .catch(function(){btn.disabled=false;btn.innerHTML='<i class="fas fa-check"></i>';});
+}
 var currentReportId = null;
 function viewReport(id,title,category,status,barangay,reporter,date,desc){
   currentReportId=id;

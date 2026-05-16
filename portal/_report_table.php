@@ -16,7 +16,16 @@
         <td>
           <div style="display:flex;gap:5px;">
             <button class="btn-icon btn-view" title="View Details"
-              onclick="viewReport(<?= $r['id'] ?>,'<?= addslashes(htmlspecialchars($r['title'])) ?>','<?= $r['category'] ?>','<?= $r['status'] ?>','<?= addslashes(htmlspecialchars($r['barangay']??$r['city']??'')) ?>','<?= addslashes(htmlspecialchars($r['first_name'].' '.$r['last_name'])) ?>','<?= date('M j, Y',strtotime($r['created_at'])) ?>','<?= addslashes(htmlspecialchars($r['description']??'')) ?>')">
+              onclick="viewReport(
+                <?= $r['id'] ?>,
+                '<?= addslashes(htmlspecialchars($r['title'])) ?>',
+                '<?= $r['category'] ?>',
+                '<?= $r['status'] ?>',
+                '<?= addslashes(htmlspecialchars($r['barangay']??$r['city']??'')) ?>',
+                '<?= addslashes(htmlspecialchars($r['first_name'].' '.$r['last_name'])) ?>',
+                '<?= date('M j, Y',strtotime($r['created_at'])) ?>',
+                '<?= addslashes(htmlspecialchars($r['description']??'')) ?>'
+              )">
               <i class="fas fa-eye"></i>
             </button>
             <?php if($r['status'] !== 'safe'): ?>
@@ -32,13 +41,3 @@
     </tbody>
   </table>
 </div>
-<script>
-function quickResolve(id,btn){
-  if(!confirm('Mark this report as resolved?'))return;
-  btn.disabled=true;
-  var fd=new FormData(); fd.append('action','resolve_report'); fd.append('report_id',id);
-  fetch('../api/reports.php',{method:'POST',body:fd})
-    .then(function(r){return r.json();})
-    .then(function(data){if(data.status==='success')location.reload();else{alert(data.message);btn.disabled=false;}});
-}
-</script>

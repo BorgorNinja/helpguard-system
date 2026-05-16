@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 0);
+ob_start();
 session_start();
 if (isset($_SESSION['user_id'])) {
     require_once __DIR__ . '/config/auth.php';
@@ -58,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($portal==='admin' && $email==='admin' && $password==='admin') {
         session_regenerate_id(true);
         $_SESSION = ['user_id'=>0,'first_name'=>'Admin','last_name'=>'','role'=>'admin','is_approved'=>true];
-        echo json_encode(['status'=>'success','redirect'=>'admin.php']); exit;
+        echo json_encode(['status'=>'success','redirect'=>'/admin.php']); exit;
     }
 
     $stmt = $conn->prepare("SELECT id,first_name,last_name,password,role,email_verified,is_approved FROM users WHERE email=? LIMIT 1");

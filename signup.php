@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $position = trim($_POST['position']      ?? '');
     $brgy     = trim($_POST['barangay_name'] ?? '');
     $muni     = trim($_POST['municipality']  ?? '');
-    $rtype    = trim($_POST['responder_type']?? '');
+    $rtype    = trim($_POST['responder_type'] ?? '') ?: null;
     $phone    = trim($_POST['phone']         ?? '');
 
     $allowed_roles = ['community','barangay','lgu','first_responder'];

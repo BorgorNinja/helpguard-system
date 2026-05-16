@@ -17,7 +17,12 @@ $pos  = $prof['position']     ?? 'LGU Official';
 
 function cq($conn,$sql,$types='',$params=[]){
     $s=$conn->prepare($sql);
-    if($types) $s->bind_param($types,...$params);
+    if($types && count($params)){
+        $refs=[];
+        foreach($params as &$v) $refs[]=&$v;
+        array_unshift($refs,$types);
+        call_user_func_array([$s,'bind_param'],$refs);
+    }
     $s->execute(); $s->bind_result($n); $s->fetch(); $s->close();
     return (int)$n;
 }
@@ -50,7 +55,7 @@ if ($view === 'overview' || $view === 'barangays') {
 }
 
 if ($view === 'contacts') {
-    $cs = $conn->query("SELECT id,name,type,contact_email,contact_phone,address,is_active FROM emergency_contacts ORDER BY type,name");
+    $cs = $conn->query("SELECT id,name,type,contact_number,contact_email,barangay,city,is_active FROM emergency_contacts ORDER BY type,name");
     if ($cs) while($r=$cs->fetch_assoc()) $contacts[]=$r;
 }
 
@@ -538,9 +543,9 @@ tr:hover td{background:#fafafa;}
           <div style="flex:1;min-width:0;">
             <div class="contact-name"><?= htmlspecialchars($c['name']) ?></div>
             <div class="contact-meta">
-              <?php if($c['contact_phone']): ?><span><i class="fas fa-phone" style="margin-right:4px;"></i><?= htmlspecialchars($c['contact_phone']) ?></span>&nbsp;&nbsp;<?php endif; ?>
+              <?php if($c['contact_number']): ?><span><i class="fas fa-phone" style="margin-right:4px;"></i><?= htmlspecialchars($c['contact_number']) ?></span>&nbsp;&nbsp;<?php endif; ?>
               <?php if($c['contact_email']): ?><span><i class="fas fa-envelope" style="margin-right:4px;"></i><?= htmlspecialchars($c['contact_email']) ?></span>&nbsp;&nbsp;<?php endif; ?>
-              <?php if($c['address']): ?><span><i class="fas fa-location-dot" style="margin-right:4px;"></i><?= htmlspecialchars($c['address']) ?></span><?php endif; ?>
+              <?php if($c['city']): ?><span><i class="fas fa-location-dot" style="margin-right:4px;"></i><?= htmlspecialchars($c['barangay'] ? $c['barangay'].', '.$c['city'] : $c['city']) ?></span><?php endif; ?>
             </div>
           </div>
           <span class="contact-type" style="background:<?= $tc[0] ?>;color:<?= $tc[1] ?>;"><?= strtoupper($c['type']) ?></span>

@@ -26,7 +26,7 @@ UPDATE `users` SET `is_approved` = 1 WHERE `role` = 'admin';
 
 -- Add responder_type to first_responder accounts
 ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `responder_type` enum('bfp','pnp','ems','drrmo','mdrrmo','hospital','other') DEFAULT NULL AFTER `is_approved`;
+  ADD COLUMN IF NOT EXISTS `responder_type` varchar(30) DEFAULT NULL AFTER `is_approved`;
 
 -- Index for role-based queries
 ALTER TABLE `users`

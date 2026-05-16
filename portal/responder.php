@@ -22,7 +22,16 @@ $unit_color  = $type_colors[strtolower($prof['responder_type']??'')] ?? '#dc2626
 $cat_icons = ['crime'=>'fa-user-slash','accident'=>'fa-car-burst','flooding'=>'fa-water','fire'=>'fa-fire','health'=>'fa-heart-pulse','infrastructure'=>'fa-road-barrier','other'=>'fa-circle-exclamation'];
 $type_icons = ['lgu'=>'fa-landmark','hospital'=>'fa-hospital','traffic'=>'fa-traffic-light','barangay'=>'fa-house-flag','police'=>'fa-shield','fire'=>'fa-fire-extinguisher','other'=>'fa-phone'];
 
-function cq($conn,$sql,$t='',$p=[]){$s=$conn->prepare($sql);if($t)$s->bind_param($t,...$p);$s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;}
+function cq($conn,$sql,$t='',$p=[]){
+    $s=$conn->prepare($sql);
+    if($t && count($p)){
+        $refs=[];
+        foreach($p as &$v) $refs[]=&$v;
+        array_unshift($refs,$t);
+        call_user_func_array([$s,'bind_param'],$refs);
+    }
+    $s->execute();$s->bind_result($n);$s->fetch();$s->close();return(int)$n;
+}
 $total_active  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status IN('dangerous','caution') AND is_archived=0");
 $danger_count  = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='dangerous' AND is_archived=0");
 $caution_count = cq($conn,"SELECT COUNT(*) FROM reports WHERE status='caution' AND is_archived=0");
